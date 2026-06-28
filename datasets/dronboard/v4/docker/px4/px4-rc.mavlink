@@ -1,0 +1,84 @@
+#!/bin/sh
+# shellcheck disable=SC2154
+# set -x
+
+udp_offboard_port_local=$((16000+px4_instance))
+udp_offboard_port_remote=$((15000+px4_instance))
+
+udp_onboard_payload_port_local=$((14280+px4_instance))
+udp_onboard_payload_port_remote=$((14030+px4_instance))
+udp_onboard_gimbal_port_local=$((13030+px4_instance))
+udp_onboard_gimbal_port_remote=$((13280+px4_instance))
+udp_gcs_port_local=$((18570+px4_instance))
+
+
+# GCS link
+if [ ! -z $GCS_SERIAL_DEVICE ]
+then
+    # gcs communication over serial
+    mavlink start -b 921600 -Z -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s POSITION_TARGET_LOCAL_NED -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s LOCAL_POSITION_NED -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s GLOBAL_POSITION_INT -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s ATTITUDE -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s ATTITUDE_QUATERNION -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s ATTITUDE_TARGET -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 50 -s SERVO_OUTPUT_RAW_0 -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 20 -s RC_CHANNELS -d $GCS_SERIAL_DEVICE
+    mavlink stream -r 10 -s OPTICAL_FLOW_RAD -d $GCS_SERIAL_DEVICE
+else
+    # gcs communicaiton over ethernet
+    qgc_ip=`/usr/bin/getent hosts host.qgc | awk '{print $1}'`
+    mavlink start -x -u $udp_gcs_port_local -r 4000000 -f -t $qgc_ip -o 14550
+    mavlink stream -r 50 -s POSITION_TARGET_LOCAL_NED -u $udp_gcs_port_local
+    mavlink stream -r 50 -s LOCAL_POSITION_NED -u $udp_gcs_port_local
+    mavlink stream -r 50 -s GLOBAL_POSITION_INT -u $udp_gcs_port_local
+    mavlink stream -r 50 -s ATTITUDE -u $udp_gcs_port_local
+    mavlink stream -r 50 -s ATTITUDE_QUATERNION -u $udp_gcs_port_local
+    mavlink stream -r 50 -s ATTITUDE_TARGET -u $udp_gcs_port_local
+    mavlink stream -r 50 -s SERVO_OUTPUT_RAW_0 -u $udp_gcs_port_local
+    mavlink stream -r 20 -s RC_CHANNELS -u $udp_gcs_port_local
+    mavlink stream -r 10 -s OPTICAL_FLOW_RAD -u $udp_gcs_port_local
+fi
+
+echo px4_instance=$px4_instance
+
+mavros_service_name="mavros_"$px4_instance
+
+echo mavros_service_name=$mavros_service_name
+
+# Try to resolve the IP address
+mavros_ip=$(/usr/bin/dig +short mavros_$px4_instance)
+
+# If the first command returns empty, try the second one
+if [ -z "$mavros_ip" ]; then
+    echo "No service named $mavros_service_name found. Falling back to mavros"
+    mavros_ip=$(/usr/bin/dig +short mavros)
+fi
+
+# Check if the IP address is empty
+if [ -z "$mavros_ip" && -z $OFFBOARD_SERIAL_DEVICE]; then
+    echo "No IP address found for mavros_$px4_instance or mavros"
+    exit 1
+fi
+
+# API/Offboard link
+if [ ! -z $OFFBOARD_SERIAL_DEVICE ]
+then
+    # offboard communication over serial
+    mavlink start -b 921600 -Z -d $OFFBOARD_SERIAL_DEVICE -m onboard
+else
+    # offboard communication over ethernet
+    echo "mavlink start -x -u $udp_offboard_port_local -r 4000000 -f -m onboard -t $mavros_ip -o $udp_offboard_port_remote"
+    mavlink start -x -u $udp_offboard_port_local -r 4000000 -f -m onboard -t $mavros_ip -o $udp_offboard_port_remote
+fi
+
+
+# Onboard link to camera
+echo "mavlink start -x -u $udp_onboard_payload_port_local -r 4000 -f -m onboard -o $udp_onboard_payload_port_remote"
+mavlink start -x -u $udp_onboard_payload_port_local -r 4000 -f -m onboard -o $udp_onboard_payload_port_remote
+
+
+# Onboard link to gimbal
+echo "mavlink start -x -u $udp_onboard_gimbal_port_local -r 400000 -m gimbal -o $udp_onboard_gimbal_port_remote"
+mavlink start -x -u $udp_onboard_gimbal_port_local -r 400000 -m gimbal -o $udp_onboard_gimbal_port_remote

@@ -1,0 +1,116 @@
+{
+    "states": [
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "BriarWaypoint0",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint0",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.60638, 
+                    "longitude": -86.35606,
+                    "altitude": 242
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint1",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint1",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.60650, 
+                    "longitude": -86.35508,
+                    "altitude": 242
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint2",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint2",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.60657, 
+                    "longitude": -86.35606,
+                    "altitude": 242
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint3",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint3",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.60665, 
+                    "longitude": -86.35532,
+                    "altitude": 242
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

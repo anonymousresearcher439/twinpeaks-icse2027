@@ -1,0 +1,24 @@
+
+{
+    "task_id": "bbd656c7-5fa8-44dd-b445-56818ed377fc",
+    "states": [
+        {
+            "name": "Fly to Lime Waypoint",
+            "class": "FlyWaypoints",
+            "comment": "This is near where lime is hovering",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.862845701793034, "longitude": -85.90779576022366, "altitude": 40}
+                ],
+                "default_speed": 4.0
+            },
+            "transitions": [
+                {
+                    "target": "success",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        }
+    ]
+}
+

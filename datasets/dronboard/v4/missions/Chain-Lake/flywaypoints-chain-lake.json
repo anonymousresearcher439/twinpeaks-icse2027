@@ -1,0 +1,93 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                    { "latitude": 41.862802080201135, "longitude": -85.90910417191552, "relative_altitude": 20, "speed": 5 },
+                    { "latitude": 41.86301293891705, "longitude": -85.90911807557383, "relative_altitude": 25, "speed": 5 },
+                    { "latitude": 41.86285802542952, "longitude": -85.9088949090152, "relative_altitude": 20, "speed": 5 },
+                    { "latitude": 41.86289616884514, "longitude": -85.90857029452819, "relative_altitude": 25, "speed": 5 }
+                ],
+                "stare_position": {
+                    "latitude": 41.86242853303182,
+                    "longitude": -85.90908042678146,
+                    "relative_altitude": 0
+                },
+                "default_speed": 2.24
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "GoHome"
+                },
+                {
+                    "condition": "found",
+                    "target": "Found Something"
+                }
+            ]
+        },
+        {
+            "name": "Found Something",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 5.0
+            },
+            "transitions": [
+                {
+                    "target": "GoHome",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

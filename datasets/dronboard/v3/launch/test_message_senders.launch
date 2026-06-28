@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <test test-name="ros_message_senders_test" pkg="dr_onboard_autonomy" type="test_ros_message_senders.py" time-limit="10.0" />
+</launch>

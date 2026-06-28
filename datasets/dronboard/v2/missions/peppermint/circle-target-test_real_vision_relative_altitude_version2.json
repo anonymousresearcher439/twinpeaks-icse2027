@@ -1,0 +1,155 @@
+{
+    "states": [
+
+        {
+            "name": "Takeoff",
+            
+            "args": {
+                "relative_altitude": 15.0
+            },
+            
+            "transitions": [
+                {
+                    "target": "BriarWaypoint",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606495913977746,
+                    "longitude": -86.35546617394243,
+                    "relative_altitude": 15.0
+                },
+
+                "stare_pitch": 45,
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "CircleTarget",
+                    "condition": "found"
+                },
+                
+                {
+                    "target": "BriarWaypoint2",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        
+                  {
+            "name": "BriarWaypoint2",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606704490718975,
+                    "longitude": -86.35572366600584,
+                    "relative_altitude": 15.0
+                },
+
+                "stare_pitch": 45,
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "CircleTarget",
+                    "condition": "found"
+                },
+                
+                {
+                    "target": "BriarWaypoint3",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        
+                  {
+            "name": "BriarWaypoint3",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.60662131761709,
+                    "longitude": -86.35621537648575,
+                    "relative_altitude": 15.0
+                },
+
+                "stare_pitch": 45,
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "CircleTarget",
+                    "condition": "found"
+                },
+                
+                {
+                    "target": "BriarWaypoint4",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        
+        {
+            "name": "CircleTarget",
+            "class": "CircleVisionTarget",
+            "args": {
+                "target_circle_radius": 10.0,
+                "target_circle_height": 10.0,
+                "target_approach_speed": 2.5,
+                "circle_speed": 1.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint4",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint4",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606695,
+                    "longitude": -86.355516,
+                    "relative_altitude": 7.0
+                },
+     
+                "stare_pitch": 45,
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

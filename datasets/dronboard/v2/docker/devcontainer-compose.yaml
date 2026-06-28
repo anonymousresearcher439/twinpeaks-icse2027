@@ -1,0 +1,22 @@
+name: dr-onboard-autonomy
+
+services:
+  mqtt_local:
+    extends:
+      file: ./common.yaml
+      service: mqtt_local
+
+  roscore:
+    extends:
+      file: ./common.yaml
+      service: roscore
+
+  devcontainer:
+    extends:
+      file: ./common.yaml
+      service: dr-onboard-autonomy
+    depends_on:
+      - mqtt_local
+      - roscore
+    volumes:
+      - ..:/catkin_ws/src/dr_onboard_autonomy:cached

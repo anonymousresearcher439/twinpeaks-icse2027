@@ -1,0 +1,54 @@
+name: dr-onboard-autonomy
+
+services:
+  mavlink_router:
+    build: ../mavlink-router
+    devices:
+      - /dev/ttyGCS:/dev/ttyGCS
+
+  roscore:
+    extends:
+      file: ../common.yaml
+      service: roscore
+
+  mavros:
+    extends:
+      file: ../common.yaml
+      service: mavros
+    devices:
+      - /dev/ttyMAVROS:/dev/ttyMAVROS
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=/dev/ttyMAVROS:921600"
+
+  mqtt_local:
+    extends:
+      file: ../common.yaml
+      service: mqtt_local
+
+  dr_onboard:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    depends_on:
+      - mavros
+      - mavlink_router
+      - mqtt_local
+      - roscore
+    volumes:
+      # necessary to resolve hosts via mDNS
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "bash"
+      - "-c"
+      - "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py _uav_name:=Polkadot _mqtt_host:=gcs.local _local_mqtt_host:=mqtt_local"

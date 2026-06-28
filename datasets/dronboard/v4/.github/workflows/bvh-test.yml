@@ -1,0 +1,42 @@
+name: 🌐 Test BVH Related Functionality
+
+on: [push]
+
+jobs:
+  integration-test:
+    runs-on: [self-hosted]
+    env:
+      TERRAIN_DATA_DIR: /terrain
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Check if terrain data already exists
+      - name: Check for existing terrain data
+        id: terrain_check
+        run: |
+          if [ -d "$TERRAIN_DATA_DIR" ] && [ "$(ls -A $TERRAIN_DATA_DIR)" ]; then
+            echo we have terrain data
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo we do not have terrain data
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 3: Download and extract terrain data (if needed)
+      - name: Download and extract terrain data
+        if: ${{steps.terrain_check.outputs.exists == 'false'}}
+        run: |
+          echo "Downloading terrain data..."
+          wget -q -O terrain.tar https://mm-public-fileshare.s3.us-west-2.amazonaws.com/terrain.tar
+          tar -xf terrain.tar -C $TERRAIN_DATA_DIR
+          echo "Terrain data downloaded and extracted."
+
+      # Step 4: build Docker image
+      - name: build the docker images
+        run: docker compose -f docker/tests-compose.yaml build
+
+      # Step 5: Run the tests with Docker Compose
+      - name: Run integration tests
+        run: docker compose -f docker/tests-compose.yaml run gh_actions_bvh_tests

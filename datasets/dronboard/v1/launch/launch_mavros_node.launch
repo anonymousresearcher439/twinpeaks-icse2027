@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- This is the name of the UAV and it is used when sending messages over MQTT -->
+    <arg name="uav_name" default="default_uav"/>
+    <arg name="mqtt_host" default="127.0.0.1"/>
+
+    <!-- this is for the real drone with GPS-->
+    <!-- <arg name="fcu_url" default="/dev/ttyUSB0:921600"/>  -->
+    <arg name="fcu_url" default="udp-b://:14540@14548"/>
+    <arg name="ID" default="0"/>
+    
+    <!-- Uncomment line 14-17 to bypass rosrun  -->
+    <!-- <node name="OnboardPilot" pkg="dr_onboard_autonomy" type="state_machine.py" output="screen">
+        <param name="uav_name" value="$(arg uav_name)"/>
+        <param name="mqtt_host" value="$(arg mqtt_host)" />
+    </node> -->
+
+    <!-- Launching MAVROS node -->
+    <include file="$(find mavros)/launch/px4.launch">
+        <arg name="fcu_url" value="$(arg fcu_url)"/>
+        <arg name="gcs_url" value=""/>
+        <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+        <arg name="tgt_component" value="1"/>
+    </include>
+
+</launch>

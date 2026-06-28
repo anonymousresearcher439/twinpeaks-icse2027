@@ -1,0 +1,38 @@
+For flying without Gimbal Lock and Vision:
+
+export PX4_HOME_LAT=41.70573086523541
+export PX4_HOME_LON=-86.24421841999177
+export PX4_HOME_ALT=0
+
+json file: mission-spec.json
+
+For Gimbal Lock:
+
+export PX4_HOME_LAT=41.91801190192179
+export PX4_HOME_LON=-85.93425044654792
+export PX4_HOME_ALT=220.0 
+
+json file: mission.json
+
+Note: We use this set of home location to match with the waypoints in the mission.json file (used for gimbal lock)
+
+For Tracking:
+
+export PX4_HOME_LAT=41.91801190192179
+export PX4_HOME_LON=-85.93425044654792
+export PX4_HOME_ALT=0
+
+json file: mission_vision.json
+
+These are required instrucitons for running the vision script:
+
+python3 darknet_video_test.py --weights yolov3.weights --ext_output --config_file yolov3.cfg --data_file coco.data --thresh 0.5
+
+python3 darknet_video_test_gazebo.py --weights yolov3.weights --ext_output --config_file yolov3.cfg --data_file coco.data --thresh 0.7
+
+python3 darknet_video_test_gazebo.py --weights yolov3-tiny.weights --ext_output --config_file yolov3-tiny.cfg --data_file coco.data --thresh 0.7
+
+python3 darknet_video_test_gazebo_tracking.py --weights yolov4.weights --ext_output --config_file yolov4.cfg --data_file coco.data --thresh 0.9
+
+
+

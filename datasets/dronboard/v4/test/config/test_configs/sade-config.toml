@@ -1,0 +1,67 @@
+#Drone Config Template
+# These are permanent configuration details that don't change run-to-run
+name = "Polkadot"
+system_id = 1 # this is the MAVLink system ID
+
+# SADE details
+drone_registration_id = "DRONE-POLKADOT-1000"
+pilot_id = "PILOT-POLKADOT-1000"
+owner_id = "OWNER-POLKADOT-1000"
+drone_model = "Skydio-2"
+
+[mqtt]
+# The ground control MQTT server
+host = "10.222.0.1"
+port = 1883
+
+[mqtt_local]
+# The local MQTT server
+host = "mqtt_local_0"
+port = 1883
+
+[mqtt_cloud]
+host = "a3dpdfmwa109lg-ats.iot.us-east-2.amazonaws.com"
+port = 8883
+max_qos = 1
+[mqtt_cloud.tls]
+public_cert = "/etc/dr/mqtt/public.crt"
+private_key = "/etc/dr/mqtt/private.key"
+ca_cert = "/etc/dr/mqtt/CAs.crt"
+
+[fcu]
+# Flight control unit
+# type: "ardupilot" | "px4"
+type = "px4"
+
+[gimbal]
+# In python this is config['uav']['gimbal']['pitch'] or config.uav.gimbal.pitch for class based config
+pitch = true
+roll = true
+yaw = true
+# type: "gremsy" | "mavlink_gimbal_manager" | "fixed_camera"
+type = "mavlink_gimbal_manager"
+# axes: "three_axis" | "roll_first" | "pitch_first"
+# this field is optional. If not provided, the default value is
+# "three_axis" if roll and pitch and yaw are `true` otherwise if roll
+# and pitch are True, the default value is "roll_first"
+axes = "three_axis"
+
+# Roll limits configuration (in degrees)
+# These limits are optional
+# [gimbal.roll_limits]
+# min = -60.0
+# max = 60.0
+
+# Pitch limits configuration (in degrees)
+# [gimbal.pitch_limits]
+# min = -127
+# max = 127
+
+[camera]
+# The field of view of the camera in degrees
+horizontal_fov = 74
+vertical_fov = 42
+
+[computer_vision]
+# Whether to use BVHTree in geolocation
+use_bvhtree = false

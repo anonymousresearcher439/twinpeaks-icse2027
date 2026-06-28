@@ -1,0 +1,14 @@
+version: '3'
+services:
+  mavros:
+    # For companion computer
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=/dev/ttyUSB0:921600?ids=1,1"]
+  
+  dr_onboard:
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+    command: ["stdbuf", "-o", "L", "bash", "-c", "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py _uav_name:=Polkadot _mqtt_host:=10.223.0.1 _local_mqtt_host:=mqtt_local"]

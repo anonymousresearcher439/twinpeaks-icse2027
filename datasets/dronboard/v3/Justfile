@@ -1,0 +1,122 @@
+drone_name := "Polkadot"
+gcs_host := "10.222.0.1"
+
+default:
+    just --list
+
+run:
+    python src/dr_onboard_autonomy/state_machine.py _uav_name:={{drone_name}} _mqtt_host:={{gcs_host}} _local_mqtt_host:=mqtt_local _performance_analysis:=False
+
+run_perf:
+    python src/dr_onboard_autonomy/state_machine.py _uav_name:={{drone_name}} _mqtt_host:={{gcs_host}} _local_mqtt_host:=mqtt_local _performance_analysis:=True _comment:=`git rev-parse --short HEAD`
+
+# send MISSION drone_name:
+#     ./scripts/send_mission.sh {{drone_name}} missions/{{MISSION}}.json
+
+# echo-px4-restart-cmd:
+#     # Due to a Docker-outside-Docker issue, this command is incompatible with
+#     # our dev container. Please execute it directly in the host's shell instead.
+#     @echo
+#     @echo 'docker compose kill px4 && docker compose rm px4 && docker compose up -d --no-deps px4'
+
+# These commands don't work inside the dev container
+# But they will work if you run "just" in your native shell
+# px4-restart:
+#     docker compose kill px4 && docker compose rm --force px4 && docker compose up -d --no-deps px4
+
+# px4-stop:
+#     docker compose kill px4 && docker compose rm px4
+
+# px4-start:
+#     docker compose up -d --no-deps px4
+
+# px4-cp-logs:
+#     mkdir -p ~/Desktop/px4-logs/
+#     docker compose cp px4:/home/user/Firmware/build/px4_sitl_default/logs/`date -u -I` ~/Desktop/px4-logs/
+#     open ~/Desktop/px4-logs
+unit-test:
+    docker compose -f ./docker/tests-compose.yaml run gh_actions_unit_tests
+
+send-mission MISSION_FILE DRONE=drone_name MQTT_HOST=gcs_host:
+    cat {{MISSION_FILE}} |  mosquitto_pub -h {{MQTT_HOST}} -t 'drone/{{DRONE}}/mission-spec' -s --id `./scripts/mk-mqtt-id.sh SEND-MISSION-SCRIPT`
+
+list-missions:
+    python3 scripts/list-missions.py
+
+generate-drones NUM:
+    python3 scripts/generate-drones.py {{NUM}}
+
+list-simulations:
+    echo local
+    echo multi
+    echo serial
+
+simulate-local-px4 *FLAGS:
+    docker compose -f ./docker/simulations/local-px4.yaml up {{FLAGS}}
+
+simulate-local-ardupilot *FLAGS:
+    docker compose -f ./docker/simulations/local-ardupilot.yaml up {{FLAGS}}
+
+simulate *FLAGS:
+    docker compose -f ./docker/simulations/local-ardupilot.yaml up mqtt_local mavros roscore ardupilot {{FLAGS}}
+
+simulate-multi NUM_DRONES *FLAGS:
+    just generate-drones {{NUM_DRONES}} && \
+    docker compose -f ./docker/simulations/multi.yaml up {{FLAGS}}
+
+simulate-ardupilot-serial:
+    docker compose -f ./docker/simulations/ardupilot-serial.yaml up
+
+simulate-px4-serial:
+    docker compose -f ./docker/simulations/px4-serial.yaml up
+
+start-drone DRONE:
+    docker compose -f ./docker/drone/{{DRONE}}.yaml up
+
+purge-containers:
+    docker ps -a --filter "name=^dr-onboard-autonomy-" -q | xargs docker rm -f
+
+docker-compose *ARGS:
+    docker compose -f ./docker/common.yaml {{ARGS}}
+
+octo-start:
+    just send-mission missions/Octagon/Red-start.json Red
+    just send-mission missions/Octagon/Lime-start.json Lime
+    just send-mission missions/Octagon/Aqua-start.json Aqua
+    just send-mission missions/Octagon/Fuchsia-start.json Fuchsia
+    just send-mission missions/Octagon/DodgerBlue-start.json DodgerBlue
+    just send-mission missions/Octagon/Gold-start.json Gold
+    just send-mission missions/Octagon/Orange-start.json Orange
+    just send-mission missions/Octagon/Violet-start.json Violet
+
+octo-run:
+    just send-mission missions/Octagon/Red-mission.json Red
+    just send-mission missions/Octagon/Lime-mission.json Lime
+    just send-mission missions/Octagon/Aqua-mission.json Aqua
+    just send-mission missions/Octagon/Fuchsia-mission.json Fuchsia
+    just send-mission missions/Octagon/DodgerBlue-mission.json DodgerBlue
+    just send-mission missions/Octagon/Gold-mission.json Gold
+    just send-mission missions/Octagon/Orange-mission.json Orange
+    just send-mission missions/Octagon/Violet-mission.json Violet
+
+octo-lite:
+    just send-mission missions/Octagon/Red-mission-lite.json Red
+    just send-mission missions/Octagon/Lime-mission-lite.json Lime
+    just send-mission missions/Octagon/Aqua-mission-lite.json Aqua
+    just send-mission missions/Octagon/Fuchsia-mission-lite.json Fuchsia
+    just send-mission missions/Octagon/DodgerBlue-mission-lite.json DodgerBlue
+    just send-mission missions/Octagon/Gold-mission-lite.json Gold
+    just send-mission missions/Octagon/Orange-mission-lite.json Orange
+    just send-mission missions/Octagon/Violet-mission-lite.json Violet
+
+chain-lake-deadlock-test:
+    just send-mission missions/Chain-Lake/red-deadlock-test.json red
+    just send-mission missions/Chain-Lake/lime-deadlock-test.json lime
+
+chain-lake-deadlock-tasks:
+    MQTT_SERVER={{gcs_host}} bash ./scripts/send_task.sh new missions/tasks/Chain-Lake/deadlock-task-lime.json.txt --name lime
+    MQTT_SERVER={{gcs_host}} bash ./scripts/send_task.sh new missions/tasks/Chain-Lake/deadlock-task-red.json.txt --name red
+
+chain-lake-deadlock-end:
+    MQTT_SERVER={{gcs_host}} bash ./scripts/send_task.sh end missions/tasks/end-task-loop.json.txt --name red
+    MQTT_SERVER={{gcs_host}} bash ./scripts/send_task.sh end missions/tasks/end-task-loop.json.txt --name lime

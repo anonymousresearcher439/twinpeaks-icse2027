@@ -1,0 +1,62 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 5
+            },
+            "transitions": [
+                {
+                    "target": "RunTasks",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "RunTasks",
+            "class": "RunTasks",
+            "transitions": [
+                {
+                    "condition": "success",
+                    "target": "FlyHome"
+                }
+            ]
+        },
+        {
+            "name": "FlyHome",
+            "args": {
+                "speed": 4,
+                "stare_pitch": 45
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

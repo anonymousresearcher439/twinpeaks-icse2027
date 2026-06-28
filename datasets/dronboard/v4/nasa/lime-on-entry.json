@@ -1,0 +1,82 @@
+{
+  "task_id": "b4d7051b-b22f-4ba6-a48a-f027498c1520",
+  "states": [
+    {
+            "name": "Fly-to-Survey-Point",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                    "relative_altitude": 25
+                },
+                "speed": 18.0
+          },
+            "transitions": [
+                {
+                    "target": "Live-Report",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+        "name": "Live-Report",
+        "class": "BetterCircle",
+        "args": {
+            /*
+            When using `BetterCircle`, you might find it easier to think
+            in terms of the drone's height above home and the circle's radius.
+
+            By default, BetterCircle uses pitch and distance, which means height and
+            radius must be calculated using trigonometry.
+
+            To avoid doing that math, you can use this trick:
+            1. Set "pitch" to 0.0
+            2. Set "distance" to the desired radius
+            3. Set the "relative_altitude" of "center_position" to the desired height
+            */
+
+            "pitch": 0.0, // this must be 0.0 for this trick to work
+            "distance": 50.0, // This becomes the radius of the circle (since pitch is 0.0)
+            "center_position": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                "relative_altitude": 25.0 // This becomes the height of the circle (since pitch is 0.0)
+            },
+            "stare_position": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                "relative_altitude": 0.0
+            },
+            "starting_angle": 180.0,
+            "sweep_angle": 780.0,
+            "speed": 5.0
+        },
+        "transitions": [
+                {
+                    "target": "Depart-SADE-Zone",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "Depart-SADE-Zone",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.865932172371124, 
+                    "longitude": -85.92077054786687,
+                    "relative_altitude": 20.0
+                },
+                "speed": 12.0
+          },
+            "transitions": [
+                {
+                    "target": "SADE-Mission-Complete",
+                    "condition": "succeeded_waypoints",
+                    "is_task_outcome": true
+                }
+            ]
+        } 
+]
+}

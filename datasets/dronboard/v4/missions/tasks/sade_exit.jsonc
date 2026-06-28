@@ -1,0 +1,39 @@
+
+{
+    "task_id": "${task_id}",
+    "states": [
+        {
+            // THIS IS A COMMENT
+            "name": "EXIT-SADE-ZONE",
+            "class": "SadeExit",
+            /*
+            
+            TESTING 
+            MULTI-LINE COMMENT
+            
+            */
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 15,
+                "stare_position": {
+                    "latitude": 41.86693108941353,
+                    "longitude": -85.90967352301443,
+                    "relative_altitude": 20
+                }
+            },
+            "transitions": [
+                {
+                    "target": "success",
+                    "condition": "success_sade_exit"
+                },
+                {
+                    "target": "TIMEOUT!!!",
+                    "condition": "timeout",
+                     "is_task_outcome": true
+                }
+            ]
+        }
+    ]
+    // FOO
+}
+

@@ -1,0 +1,139 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "BriarWaypoint",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606535,
+                    "longitude": -86.356898,
+                    "altitude": 242.0
+                },
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "altitude": 229.0237
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarHover",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarHover",
+            "args": {
+                "hover_time": 20,
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "altitude": 229.0237
+                }
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint2",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint2",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606560,
+                    "longitude": -86.355066,
+                    "altitude": 242.0
+                },
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "altitude": 229.0237
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint3",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint3",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606669,
+                    "longitude": -86.356655,
+                    "altitude": 242.0
+                },
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "altitude": 229.0237
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

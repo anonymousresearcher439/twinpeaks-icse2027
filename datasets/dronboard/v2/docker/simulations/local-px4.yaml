@@ -1,0 +1,58 @@
+name: dr-onboard-autonomy
+
+x-extends-mqtt: &mqtt-extends
+  file: ../common.yaml
+  service: mqtt_local
+
+x-extends-roscore: &roscore-extends
+  file: ../common.yaml
+  service: roscore
+
+x-extends-mavros: &mavros-extends
+  file: ../common.yaml
+  service: mavros
+
+x-extends-px4: &px4-extends
+  file: ../common.yaml
+  service: px4
+
+services:
+  mqtt_local:
+    extends: *mqtt-extends
+
+  roscore:
+    extends: *roscore-extends
+
+  mavros:
+    extends: *mavros-extends
+    command:
+      - "stdbuf"
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=udp://:15000@:16000"
+    depends_on:
+      - roscore
+
+  px4:
+    extends: *px4-extends
+    depends_on:
+      - mavros
+
+  drone:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    volumes:
+      - ./scripts/start-state-machine.sh:/catkin_ws/start-state-machine.sh
+      - ../../test/config/config.toml:/etc/dr/config.toml
+      - ../..:/catkin_ws/src/dr_onboard_autonomy:cached
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+      - px4
+    command: ./start-state-machine.sh

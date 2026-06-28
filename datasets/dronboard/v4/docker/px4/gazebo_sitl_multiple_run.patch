@@ -1,0 +1,33 @@
+diff --git a/Tools/gazebo_sitl_multiple_run.sh b/Tools/gazebo_sitl_multiple_run.sh
+index 292272e2bd..04b2ae9993 100755
+--- a/Tools/gazebo_sitl_multiple_run.sh
++++ b/Tools/gazebo_sitl_multiple_run.sh
+@@ -10,6 +10,7 @@ function cleanup() {
+ 	pkill -x px4
+ 	pkill gzclient
+ 	pkill gzserver
++        exit 1
+ }
+ 
+ function spawn_model() {
+@@ -18,7 +19,7 @@ function spawn_model() {
+ 	X=$3
+ 	Y=$4
+ 	X=${X:=0.0}
+-	Y=${Y:=$((3*${N}))}
++	Y=${Y:=$((1*${N}))}
+ 
+ 	SUPPORTED_MODELS=("iris" "plane" "standard_vtol" "rover" "r1_rover" "typhoon_h480")
+ 	if [[ " ${SUPPORTED_MODELS[*]} " != *"$MODEL"* ]];
+@@ -136,5 +137,9 @@ else
+ fi
+ trap "cleanup" SIGINT SIGTERM EXIT
+ 
+-echo "Starting gazebo client"
+-gzclient
++while true; do
++sleep 1
++done
++
++# echo "Starting gazebo client"
++# gzclient

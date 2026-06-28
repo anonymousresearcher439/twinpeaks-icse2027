@@ -1,0 +1,20 @@
+name: dr-onboard-autonomy
+
+services:
+  unit_tests:
+    build: ..
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+
+    volumes:
+      - .:/catkin_ws/src/dr_onboard_autonomy:cached
+    # command: bash --init-file /catkin_ws/devel/setup.bash
+    command: bash -c '. /catkin_ws/devel/setup.bash ; pytest test'
+
+  gh_actions_unit_tests:
+    build: ..
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    command: bash -c '. /catkin_ws/devel/setup.bash ; python -m unittest --verbose'

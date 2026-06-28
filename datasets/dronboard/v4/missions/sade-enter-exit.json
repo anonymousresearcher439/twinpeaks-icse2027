@@ -1,0 +1,81 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+            },
+            "transitions": [
+                {
+                    "target": "SADE_ENTER",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+                {
+            "name": "SADE_ENTER",
+            "class": "SadeEnter",
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 10
+            },
+            "transitions": [
+                {
+                    "target": "SADE_EXIT",
+                    "condition": "allow"
+                },
+                {
+                    "target": "Land",
+                    "condition": "proving_ground"
+                },
+                {
+                    "target": "Land",
+                    "condition": "deny"
+                },     
+                {
+                    "target": "SADE_EXIT",
+                    "condition": "timeout"
+                }                              
+            ]
+        },
+        {
+            "name": "SADE_EXIT",
+            "class": "SadeExit",
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 10
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "success_sade_exit"
+                },
+                {
+                    "target": "Land",
+                    "condition": "timeout"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

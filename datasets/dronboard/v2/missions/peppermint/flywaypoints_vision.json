@@ -1,0 +1,77 @@
+{
+    "states": [     
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]  
+        },
+        {
+            "name": "FlyWaypoints",  
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.60662212327371, "longitude": -86.35553831862794, "altitude": 10, "speed": 2.0},
+                        {"latitude": 41.60657925733678, "longitude": -86.3558666559749, "altitude": 15, "speed": 3.0},
+                        {"latitude": 41.606550030545286, "longitude": -86.35610378850328, "altitude": 20, "speed": 1.0},
+                        {"latitude": 41.606544185185385, "longitude": -86.35654938918843, "altitude": 25},
+                        {"latitude": 41.60670395816512, "longitude": -86.35550183670051, "altitude": 7, "speed": 2.0}
+                ],
+                "stare_position": {
+                    "latitude": 41.606856499035715, 
+                    "longitude": -86.35605590685773, 
+                    "altitude": 229.0237
+                },
+                "default_speed": 2.24
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                },
+                {
+                    "condition": "error",
+                    "target": "AbortHover"
+                },
+                {
+                    "condition": "human_control",
+                    "target": "HumanControl"
+                },
+                {
+                    "condition": "abort",
+                    "target": "AbortHover"
+                },
+                {
+                    "condition": "found",
+                    "target": "AbortHover"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

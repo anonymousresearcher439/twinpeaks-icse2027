@@ -1,0 +1,116 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+            },
+            "transitions": [
+                {
+                    "target": "SADE_ENTER",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "SADE_ENTER",
+            "class": "SadeEnter",
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 10
+            },
+            "transitions": [
+                {
+                    "target": "FLY TO CENTER",
+                    "condition": "allow"
+                },
+                {
+                    "target": "Land",
+                    "condition": "proving_ground"
+                },
+                {
+                    "target": "Land",
+                    "condition": "deny"
+                },     
+                {
+                    "target": "FLY TO CENTER",
+                    "condition": "timeout"
+                }                              
+            ]
+        },
+        {
+            "name": "FLY TO CENTER",
+            "class": "FlyWaypoints",
+            "args":{
+                "waypoints": [
+                    {
+                        "latitude": 41.86487165049861,
+                        "longitude": -85.90944164146937,
+                        "relative_altitude": 20
+                    }
+                ],
+                "default_speed": 5.0,
+                "stare_pitch": 45
+            },
+            "transitions": [
+                {
+                    "target": "SADE_EXIT",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "SADE_EXIT",
+            "class": "SadeExit",
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 10
+            },
+            "transitions": [
+                {
+                    "target": "FLY HOME",
+                    "condition": "success_sade_exit"
+                },
+                {
+                    "target": "FLY HOME",
+                    "condition": "timeout"
+                }
+            ]
+        },
+        {
+            "name": "FLY HOME",
+            "class": "FlyHome",
+                "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

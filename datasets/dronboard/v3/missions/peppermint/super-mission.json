@@ -1,0 +1,293 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "class": "Takeoff",
+            "args": {
+                "altitude": 10.0,
+                "speed": 2.0,
+                "altitude_threshold": 1.0
+            },
+            "transitions": [
+                {
+                    "target": "BetterCircle",
+                    "condition": "succeeded_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BetterCircle",
+            "class": "BetterCircle",
+            "args": {
+                "center_position": {
+                    "latitude": 41.6064512009611, 
+                    "longitude": -86.355995270215,
+                    "relative_altitude": 0.0
+                },
+                "stare_position": {
+                    "latitude": 41.6064512009611, 
+                    "longitude": -86.355995270215,
+                    "relative_altitude": 0.0
+                },
+                "pitch": 50.0,
+                "distance": 20.0,
+                "starting_angle": 180.0,
+                "sweep_angle": 60.0,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "target": "BetterHover",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "BetterHover",
+            "class": "BetterHover",
+            "args": {
+                "stare_position": {
+                    "latitude": 41.606453922600465,  
+                    "longitude": -86.35555549206501,
+                    "relative_altitude": 1.0
+                },
+                "pitch": 45.0,
+                "distance": 20.0,
+                "starting_angle": 270.0,
+                "speed": 5.0,
+                "hover_time": 7.0,
+                "cruising_altitude": 24.0
+            },
+            "transitions": [
+                {
+                    "target": "BetterPath",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "BetterPath",
+            "class": "BetterPath",
+            "args": {
+                "path": [
+                    {
+                        "latitude": 41.606514240899294,
+                        "longitude":-86.35654012997003,
+                        "relative_altitude": 16
+                    },
+                    {
+                        "latitude": 41.60645517660092,
+                        "longitude":-86.35599550110241,
+                        "relative_altitude": 20
+                    },
+                    {
+                        "latitude": 41.60656223026213,
+                        "longitude":-86.35528577901390,
+                        "relative_altitude": 18
+                    }
+                ],
+                "stare_position": {
+                    "latitude": 41.606879523876685, 
+                    "longitude": -86.35603187231904,
+                    "relative_altitude": 1.0
+                },
+                "speed": 5.0,
+                "time_limit": 20.0,
+                "init_speed": 7.0
+            },
+            "transitions": [
+                {
+                    "target": "BriarCircle",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarCircle",
+            "class": "BriarCircle",
+            "args": {
+                "center_position":{
+                    "latitude": 41.60675408809003, 
+                    "longitude": -86.356016043474,
+                    "relative_altitude": 20
+                },
+                "stare_position": {
+                    "latitude": 41.606879523876685, 
+                    "longitude": -86.35603187231904,
+                    "relative_altitude": 1.0
+                },
+                "sweep_angle": 15,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "target": "BriarHover",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "BriarHover",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 5.0,
+                "stare_position": {
+                    "latitude": 41.606879523876685, 
+                    "longitude": -86.35603187231904,
+                    "relative_altitude": 1.0
+                }
+            },
+            "transitions": [
+                {
+                    "target": "BriarTravel",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "BriarTravel",
+            "class": "BriarTravel",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606508018693546,
+                    "longitude": -86.35685068219577,
+                    "relative_altitude": 22
+                },
+                "stare_position": {
+                    "latitude": 41.606879523876685, 
+                    "longitude": -86.35603187231904,
+                    "relative_altitude": 1.0
+                },
+                "cruising_altitude": 30.0,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint",
+            "class": "BriarWaypoint",
+            "args":{
+                "waypoint": {
+                    "latitude": 41.60654653889745,
+                    "longitude": -86.35575685387629,
+                    "relative_altitude": 22
+                },
+                "stare_pitch": 45.0,
+                "speed": 6.0
+            },
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "FlyWaypoints",
+            "class": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                    {"latitude": 41.606492332962360, "longitude": -86.35584795401677, "relative_altitude": 15},
+                    {"latitude": 41.606470291689604, "longitude": -86.35553704404666, "relative_altitude": 15},
+                    {"latitude": 41.606652778945936, "longitude": -86.35523126676622, "relative_altitude": 15}
+                ],
+                "default_speed": 5.0,
+                "stare_pitch": 45
+            },
+            "transitions": [
+                {
+                    "target": "Fly Path AMSL",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Fly Path AMSL",
+            "class": "FlyWaypointsAMSL",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.60656045854911, "longitude": -86.35550466673673, "altitude": 240, "speed": 2.0},
+                        {"latitude": 41.60669550941695, "longitude": -86.35550466673673, "relative_altitude": 7, "speed": 2.0}
+                ],
+                "default_speed": 2.24
+            },
+        
+            "transitions": [
+                {
+                    "target": "PhasedCircle",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "PhasedCircle",
+            "class": "PhasedCircle",
+            "args": {
+                "pitch": 45.0,
+                "distance": 30.0,
+                "starting_angle": 90,
+                "center_position": {
+                    "latitude": 41.60667484122405,
+                    "longitude": -86.35556383837958, 
+                    "relative_altitude": 0.0
+                },
+                "stare_position": {
+                    "latitude": 41.60667484122405,
+                    "longitude": -86.35556383837958, 
+                    "relative_altitude": 0.0
+                },
+                "total_sweep_angle": 90.0,
+                "speed": 5.0,
+                "cruising_altitude": 20,
+                "number_arcs": 3,
+                "pause_time": 4.0
+
+
+            },
+            "transitions": [
+                {
+                    "target": "FlyHome",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "FlyHome",
+            "class": "FlyHome",
+            "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

@@ -1,0 +1,111 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "Approach-SADE-Zone",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Approach-SADE-Zone",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.86020875972168, 
+                    "longitude":-85.91478914234185,
+                    "relative_altitude": 25
+                },
+                "speed": 12.0
+          },
+            "transitions": [
+                {
+                    "target": "REQUEST-ENTRY",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "REQUEST-ENTRY",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 30,
+                "stare_position": {
+                    "latitude": 41.861264413242, 
+                    "longitude": -85.914801900857,
+                    "relative_altitude": 25
+                }
+            },
+            "transitions": [
+                {
+                    "target": "Search-Sector-4",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+        "name": "Search-Sector-4",
+        "class": "FlyWaypoints",
+        "args": {
+            "waypoints": [
+                { "latitude": 41.861264413242, "longitude": -85.914801900857, "relative_altitude": 25 },
+                { "latitude": 41.8706295959064, "longitude": -85.914801900857, "relative_altitude": 25 },
+                { "latitude": 41.8706295959064, "longitude": -85.916101900857, "relative_altitude": 25 },
+                { "latitude": 41.861264413242, "longitude": -85.916101900857, "relative_altitude": 25 },
+                { "latitude": 41.861264413242, "longitude": -85.917401900857, "relative_altitude": 25 },
+                { "latitude": 41.8706295959064, "longitude": -85.917401900857, "relative_altitude": 25 },
+                { "latitude": 41.8706295959064, "longitude": -85.918701900857, "relative_altitude": 25 },
+                { "latitude": 41.861264413242, "longitude": -85.918701900857, "relative_altitude": 25 }
+            ],
+            "default_speed": 18.0,
+            "stare_pitch": 45
+        },
+        "transitions": [
+            {
+            "target": "GoHome",
+            "condition": "succeeded_waypoints"
+            }
+        ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

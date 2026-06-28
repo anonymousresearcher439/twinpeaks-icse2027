@@ -1,0 +1,18 @@
+{
+    "states": [
+        {
+            "name": "Ready",
+            "class": "ReadMessages",
+            "args": {
+                "name": "--- WAITING FOR VISION MESSAGE",
+                "message_names": ["vision"]
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded",
+                    "target": "mission_completed"
+                }
+            ]
+        }
+    ]
+}

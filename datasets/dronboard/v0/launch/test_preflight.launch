@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+
+    <group ns="test">
+        <test test-name="preflight_integration_test" pkg="dr_onboard_autonomy" type="test_preflight.py" time-limit="10.0">
+            <param name="uav_id" value="birdy0" />
+        <test/>
+    </group>
+</launch>

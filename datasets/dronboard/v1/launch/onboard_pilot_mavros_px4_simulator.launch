@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- This is the name of the UAV and it is used when sending messages over MQTT -->
+    <arg name="uav_name" default="default_uav"/>
+    <arg name="mqtt_host" default="127.0.0.1"/>
+
+    <!-- this is for the real drone with GPS-->
+    <!-- <arg name="fcu_url" default="/dev/ttyUSB0:921600"/>  -->
+    <arg name="fcu_url" default="udp-b://:14550@14580"/>
+    <arg name="ID" default="0"/>
+
+    <!-- args for the simulator -->
+    <arg name="latitude" default="41.70573086523541"/>
+    <arg name="longitude" default="-86.24421841999177"/>
+    <arg name="altitude" default="100"/>
+    <arg name="px4_path" default="$(find px4)"/>
+    <arg name="HEADLESS" default="0"/>
+    
+    <!-- Uncomment line 21-28 to bypass rosrun  -->
+    <node name="OnboardPilot" pkg="dr_onboard_autonomy" type="state_machine.py" output="screen">
+        <param name="uav_name" value="$(arg uav_name)"/>
+        <param name="mqtt_host" value="$(arg mqtt_host)" />
+    </node>
+
+    <include file="$(find dr_onboard_autonomy)/launch/px4_simulator.launch">
+        <arg name="latitude"  default="$(arg latitude)"/>
+        <arg name="longitude" default="$(arg longitude)"/>
+        <arg name="altitude"  default="$(arg altitude)"/>
+        <arg name="px4_path"  default="$(arg px4_path)"/>
+        <arg name="HEADLESS"  default="$(arg HEADLESS)"/>
+    </include>
+
+    <!-- Launching MAVROS node -->
+    <include file="$(find mavros)/launch/px4.launch">
+        <arg name="fcu_url" value="$(arg fcu_url)"/>
+        <arg name="gcs_url" value=""/>
+        <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+        <arg name="tgt_component" value="1"/>
+    </include>
+
+</launch>

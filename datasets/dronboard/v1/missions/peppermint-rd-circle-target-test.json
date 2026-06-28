@@ -1,0 +1,132 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "BriarWaypoint",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606673,
+                    "longitude": -86.356215,
+                    "altitude": 245.0
+                },
+                "stare_position": {
+                    "latitude": 41.606673, 
+                    "longitude": -86.356215, 
+                    "altitude": 228.0
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarHover",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "BriarHover",
+            "args": {
+                "hover_time": 15,
+                "stare_position": {
+                    "latitude": 41.606475, 
+                    "longitude": -86.356040, 
+                    "altitude": 229.0237
+                }
+            },
+            "transitions": [
+                {
+                    "target": "CircleTarget",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "CircleTarget",
+            "class": "CircleVisionTarget",
+            "args": {
+                "target_circle_radius": 10.0,
+                "target_circle_height": 10.0,
+                "target_approach_speed": 2.5,
+                "circle_speed": 1.5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint2",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint2",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606695,
+                    "longitude": -86.355516,
+                    "altitude": 235.0
+                },
+                "stare_position": {
+                    "latitude": 41.606695, 
+                    "longitude": -86.355516, 
+                    "altitude": 229.0237
+                },
+                "speed": 2.0
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

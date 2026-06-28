@@ -1,0 +1,11 @@
+name: dr-onboard-autonomy
+
+services:
+  ardupilot_serial:
+    extends:
+      file: ../common.yaml
+      service: ardupilot
+    devices:
+      - /dev/ttyMAVROS:/dev/ttyMAVROS
+      - /dev/ttyGCS:/dev/ttyGCS
+    command: screen -S mavproxy -D -m  start_simulation.sh --mavproxy-args='--out=/dev/ttyGCS,921600 --out=/dev/ttyMAVROS,921600'

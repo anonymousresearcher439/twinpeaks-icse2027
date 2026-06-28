@@ -1,0 +1,118 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "Waypoint1",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Waypoint1",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.862647309732864,
+                    "longitude": -85.90914191760787,
+                    "relative_altitude": 20
+                },
+                "stare_pitch": 45.0,
+                "speed": 5.0,
+                "incremental_segment_time": 6.0,
+                "incremental_handoff_percent": 40.0
+            },
+            "transitions": [
+                {
+                    "target": "Waypoint2",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Waypoint2",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.862808546585114,
+                    "longitude": -85.90784099041066,
+                    "relative_altitude": 20
+                },
+                "stare_position": {
+                    "latitude": 41.86317559730688,
+                    "longitude": -85.90852640370957,
+                    "relative_altitude": 0
+                },
+                "speed": 5.0,
+                "incremental_segment_time": 6.0,
+                "incremental_handoff_percent": 40.0
+            },
+            "transitions": [
+                {
+                    "target": "Waypoint3",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Waypoint3",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.8629451238439,
+                    "longitude": -85.90852181900527,
+                    "relative_altitude": 20
+                },
+                "stare_pitch": 45,
+                "speed": 5.0,
+                "incremental_segment_time": 6.0,
+                "incremental_handoff_percent": 40.0
+            },
+            "transitions": [
+                {
+                    "target": "GoHome",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "GimbalTestFixedQuaternion",
+            "args": {
+                "time": 5.0,
+                "quaternion": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0, 
+                    "w": 1
+                }
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded",
+                    "target": "mission_completed"
+                }
+            ]
+        }
+    ]
+}

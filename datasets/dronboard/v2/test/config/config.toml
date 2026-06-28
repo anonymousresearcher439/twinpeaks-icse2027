@@ -1,0 +1,16 @@
+# These are oermanent configuration details that don't change run-to-run
+name = "Polkadot"
+system_id = 1 # this is the MAVLink system ID
+
+[mqtt]
+# The ground control MQTT server
+host = "mqtt"
+port = 1883
+
+[gimbal]
+# In python this is config['uav']['gimbal']['pitch'] or config.uav.gimbal.pitch for class based config
+pitch = true
+roll = true
+yaw = false
+# type: "gremsy" | "px4"
+type = "gremsy"

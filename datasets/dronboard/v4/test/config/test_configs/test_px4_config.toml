@@ -1,0 +1,44 @@
+# These are permanent configuration details that don't change run-to-run
+name = "Polkadot"
+system_id = 1 # this is the MAVLink system ID
+
+[mqtt]
+# The ground control MQTT server
+host = "mqtt"
+port = 1883
+
+[mqtt_local]
+# The local MQTT server
+host = "mqtt_local"
+port = 1883
+
+[fcu]
+# Flight control unit
+# type: "ardupilot" | "px4"
+type = "px4"
+
+[gimbal]
+# In python this is config['uav']['gimbal']['pitch'] or config.uav.gimbal.pitch for class based config
+pitch = true
+roll = true
+yaw = true
+# type: "gremsy" | "mavlink_gimbal_manager"
+type = "mavlink_gimbal_manager"
+
+
+# Roll limits configuration (in degrees)
+# These limits are optional
+[gimbal.roll_limits]
+min = -180.0
+max = 180.0
+
+# Pitch limits configuration (in degrees)
+[gimbal.pitch_limits]
+min = -180
+max = 180
+
+# [camera]
+# The field of view of the camera in degrees
+# horizontal_fov = 74
+# vertical_fov = 42
+

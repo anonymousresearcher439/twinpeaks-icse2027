@@ -1,0 +1,73 @@
+drone_name := "Polkadot"
+
+default:
+    just --list
+
+run:
+    python src/dr_onboard_autonomy/state_machine.py _uav_name:={{drone_name}} _mqtt_host:=mqtt _local_mqtt_host:=mqtt_local _performance_analysis:=False
+
+run_perf:
+    python src/dr_onboard_autonomy/state_machine.py _uav_name:={{drone_name}} _mqtt_host:=mqtt _local_mqtt_host:=mqtt_local _performance_analysis:=True _comment:=`git rev-parse --short HEAD`
+
+# send MISSION drone_name:
+#     ./scripts/send_mission.sh {{drone_name}} missions/{{MISSION}}.json
+
+test TEST:
+    pytest {{TEST}}
+
+# echo-px4-restart-cmd:
+#     # Due to a Docker-outside-Docker issue, this command is incompatible with
+#     # our dev container. Please execute it directly in the host's shell instead.
+#     @echo
+#     @echo 'docker compose kill px4 && docker compose rm px4 && docker compose up -d --no-deps px4'
+
+# These commands don't work inside the dev container
+# But they will work if you run "just" in your native shell
+# px4-restart:
+#     docker compose kill px4 && docker compose rm --force px4 && docker compose up -d --no-deps px4
+
+# px4-stop:
+#     docker compose kill px4 && docker compose rm px4
+
+# px4-start:
+#     docker compose up -d --no-deps px4
+
+# px4-cp-logs:
+#     mkdir -p ~/Desktop/px4-logs/
+#     docker compose cp px4:/home/user/Firmware/build/px4_sitl_default/logs/`date -u -I` ~/Desktop/px4-logs/
+#     open ~/Desktop/px4-logs
+unit-test:
+
+
+send-mission NAME DRONE='Polkadot':
+    cat ./missions/{{NAME}}.json |  mosquitto_pub -h localhost -t 'drone/{{DRONE}}/mission-spec' -s
+
+list-missions:
+    python scripts/list-missions.py
+
+generate-drones NUM:
+    python scripts/generate-drones.py {{NUM}}
+
+list-simulations:
+    echo local
+    echo multi
+    echo serial
+
+simulate-local-px4 *FLAGS:
+    docker compose -f ./docker/simulations/local-px4.yaml up {{FLAGS}}
+
+simulate-local-ardupilot *FLAGS:
+    docker compose -f ./docker/simulations/local-ardupilot.yaml up {{FLAGS}}
+
+simulate-multi NUM_DRONES:
+    just generate-drones {{NUM_DRONES}} && \
+    docker compose -f ./docker/simulations/multi.yaml up
+
+simulate-px4-serial:
+    docker compose -f ./docker/simulations/px4-serial.yaml up
+
+start-drone DRONE:
+    docker compose -f ./docker/drone/{{DRONE}}.yaml up
+
+purge-containers:
+    docker ps -a --filter "name=^dr-onboard-autonomy-" -q | xargs docker rm -f

@@ -1,0 +1,13 @@
+include: []
+name: dr-onboard-autonomy
+services:
+  px4:
+    command: start_simulation_multi.sh 5
+    depends_on: []
+    extends:
+      file: ../common.yaml
+      service: px4
+  roscore:
+    extends:
+      file: ../common.yaml
+      service: roscore

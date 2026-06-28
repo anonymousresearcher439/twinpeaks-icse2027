@@ -1,0 +1,60 @@
+name: dr-onboard-autonomy
+
+services:
+  dr-onboard-autonomy:
+    build: ..
+    depends_on: []
+      # - mqtt_local
+      # - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+  mqtt_local:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./mqtt/drone-response.conf:/mosquitto/config/mosquitto.conf
+    # ports:
+    #   # Prevent conflicts with the ground control mqtt
+    #   - 11883:1883/tcp
+
+  roscore:
+    build: ./roscore
+    command: stdbuf -o L roscore
+
+  mavros:
+    build: ./mavros
+    depends_on:
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+  
+  ardupilot:
+    build: ./ardupilot
+    ports:
+      - 8080:8080/tcp
+      - 5763:5763/tcp
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    command: screen -S mavproxy -D -m  start_simulation.sh 
+
+  px4:
+    build: ./px4
+    ports:
+      - 8080:8080/tcp
+    extra_hosts:
+      - "host.qgc:host-gateway"
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./px4/px4-rc.mavlink:/home/user/Firmware/build/px4_sitl_default/etc/init.d-posix/px4-rc.mavlink
+      - ./px4/px4-rc.params:/home/user/Firmware/build/px4_sitl_default/etc/init.d-posix/px4-rc.params
+      # - ./px4/logs:/home/user/Firmware/build/px4_sitl_default/logs
+    environment:
+      - HEADLESS=1
+      - NO_PXH=1
+      - PX4_HOME_LAT=41.606695229356276
+      - PX4_HOME_LON=-86.35561433514731
+      - PX4_HOME_ALT=229.0
+      # number of drones can currently be configured up to 10
+      - NUMBER_OF_DRONES=3
+    command: start_simulation.sh

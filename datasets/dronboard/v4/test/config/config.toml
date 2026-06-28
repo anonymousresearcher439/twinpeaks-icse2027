@@ -1,0 +1,61 @@
+# These are permanent configuration details that don't change run-to-run
+name = "Polkadot"
+system_id = 1 # this is the MAVLink system ID
+
+# SADE details (Optional)
+# FAA Drone Registration ID
+# drone_registration_id = "${drone_registration_id}"
+# FAA Pilot ID
+# pilot_id = "${pilot_id}"
+# FAA Owner ID
+# owner_id = "${owner_id}"
+# The make and model of the drone
+# drone_model = "${model_name}"
+
+[mqtt]
+# The ground control MQTT server
+host = "mqtt"
+port = 1883
+
+[mqtt_local]
+# The local MQTT server
+host = "mqtt_local"
+port = 1883
+
+[fcu]
+# Flight control unit
+# type: "ardupilot" | "px4"
+type = "ardupilot"
+
+[gimbal]
+# In python this is config['uav']['gimbal']['pitch'] or config.uav.gimbal.pitch for class based config
+pitch = true
+roll = true
+yaw = false
+# type: "gremsy" | "mavlink_gimbal_manager" | "fixed_camera"
+type = "gremsy"
+# axes: "three_axis" | "roll_first" | "pitch_first"
+# this field is optional. If not provided, the default value is
+# "three_axis" if roll and pitch and yaw are `true` otherwise if roll
+# and pitch are True, the default value is "roll_first"
+axes = "roll_first"
+
+# Roll limits configuration (in degrees)
+# These limits are optional
+[gimbal.roll_limits]
+min = -60.0
+max = 60.0
+
+# Pitch limits configuration (in degrees)
+[gimbal.pitch_limits]
+min = -127
+max = 127
+
+[camera]
+# The field of view of the camera in degrees
+horizontal_fov = 74
+vertical_fov = 42
+
+[computer_vision]
+# Whether to use BVHTree in geolocation
+use_bvhtree = false

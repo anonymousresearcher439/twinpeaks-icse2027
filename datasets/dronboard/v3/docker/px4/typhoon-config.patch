@@ -1,0 +1,33 @@
+diff --git a/ROMFS/px4fmu_common/init.d-posix/airframes/6011_typhoon_h480.post b/ROMFS/px4fmu_common/init.d-posix/airframes/6011_typhoon_h480.post
+index 0af01438b7..0bce2a7d2e 100644
+--- a/ROMFS/px4fmu_common/init.d-posix/airframes/6011_typhoon_h480.post
++++ b/ROMFS/px4fmu_common/init.d-posix/airframes/6011_typhoon_h480.post
+@@ -4,7 +4,25 @@ mixer append /dev/pwm_output0 etc/mixers/mount_legs.aux.mix
+ mavlink start -x -u 14558 -r 4000 -f -m onboard -o 14530 -p
+ 
+ # shellcheck disable=SC2154
+-mavlink stream -r 10 -s MOUNT_ORIENTATION -u $udp_gcs_port_local
++if [ ! -z $GCS_SERIAL_DEVICE ]
++then
++    # in case our simulation is streaming gcs data via serial
++    mavlink stream -r 10 -s MOUNT_ORIENTATION -d $GCS_SERIAL_DEVICE
++else
++    # else make the default change to the UDP mavlink stream
++    # these changes were here originally:
++    mavlink stream -r 10 -s MOUNT_ORIENTATION -u $udp_gcs_port_local
++fi
++
+ # shellcheck disable=SC2154
+-mavlink stream -r 50 -s ATTITUDE_QUATERNION -u $udp_offboard_port_local
+-mavlink stream -r 10 -s MOUNT_ORIENTATION -u $udp_offboard_port_local
++if [ ! -z $OFFBOARD_SERIAL_DEVICE ]
++then
++    # in case our simulation is communicating with mavros via serial
++    mavlink stream -r 50 -s ATTITUDE_QUATERNION -d $OFFBOARD_SERIAL_DEVICE
++    mavlink stream -r 10 -s MOUNT_ORIENTATION -d $OFFBOARD_SERIAL_DEVICE
++else
++    # else make the default change to the UDP mavlink stream
++    # these changes were here originally:
++    mavlink stream -r 50 -s ATTITUDE_QUATERNION -u $udp_offboard_port_local
++    mavlink stream -r 10 -s MOUNT_ORIENTATION -u $udp_offboard_port_local
++fi

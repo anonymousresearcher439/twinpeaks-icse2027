@@ -1,0 +1,67 @@
+diff --git a/ROMFS/px4fmu_common/init.d-posix/px4-rc.mavlink b/ROMFS/px4fmu_common/init.d-posix/px4-rc.mavlink
+index 88aa1fe722..9486f7c1c1 100644
+--- a/ROMFS/px4fmu_common/init.d-posix/px4-rc.mavlink
++++ b/ROMFS/px4fmu_common/init.d-posix/px4-rc.mavlink
+@@ -23,7 +23,7 @@ mavlink stream -r 20 -s RC_CHANNELS -u $udp_gcs_port_local
+ mavlink stream -r 10 -s OPTICAL_FLOW_RAD -u $udp_gcs_port_local
+ 
+ # API/Offboard link
+-mavlink start -x -u $udp_offboard_port_local -r 4000000 -f -m onboard -o $udp_offboard_port_remote
++mavlink start -p -x -u $udp_offboard_port_local -r 4000000 -f -m onboard -o $udp_offboard_port_remote
+ 
+ # Onboard link to camera
+ mavlink start -x -u $udp_onboard_payload_port_local -r 4000 -f -m onboard -o $udp_onboard_payload_port_remote
+diff --git a/ROMFS/px4fmu_common/init.d-posix/px4-rc.params b/ROMFS/px4fmu_common/init.d-posix/px4-rc.params
+index 49725f622b..56b7ce8bf8 100644
+--- a/ROMFS/px4fmu_common/init.d-posix/px4-rc.params
++++ b/ROMFS/px4fmu_common/init.d-posix/px4-rc.params
+@@ -3,3 +3,6 @@
+ 
+ #param set MAV_SYS_ID $((px4_instance+1))
+ #param set IMU_INTEG_RATE 250
++param set GF_MAX_HOR_DIST 500
++param set GF_MAX_VER_DIST 121
++param set COM_DISARM_PRFLT 15
+diff --git a/platforms/posix/src/px4/common/print_load.cpp b/platforms/posix/src/px4/common/print_load.cpp
+index d385df4fda..535006353f 100644
+--- a/platforms/posix/src/px4/common/print_load.cpp
++++ b/platforms/posix/src/px4/common/print_load.cpp
+@@ -116,7 +116,6 @@ void print_load(int fd, struct print_load_s *print_state)
+ 	mach_msg_type_number_t thread_info_count;
+ 
+ 	thread_basic_info_t basic_info_th;
+-	uint32_t stat_thread = 0;
+ 
+ 	// get all threads of the PX4 main task
+ 	kr = task_threads(task_handle, &thread_list, &th_cnt);
+@@ -126,10 +125,6 @@ void print_load(int fd, struct print_load_s *print_state)
+ 		return;
+ 	}
+ 
+-	if (th_cnt > 0) {
+-		stat_thread += th_cnt;
+-	}
+-
+ 	long tot_sec = 0;
+ 	long tot_usec = 0;
+ 	long tot_cpu = 0;
+diff --git a/src/systemcmds/esc_calib/esc_calib.c b/src/systemcmds/esc_calib/esc_calib.c
+index f5445f4160..5cd7baed3a 100644
+--- a/src/systemcmds/esc_calib/esc_calib.c
++++ b/src/systemcmds/esc_calib/esc_calib.c
+@@ -115,7 +115,6 @@ esc_calib_main(int argc, char *argv[])
+ 		return 1;
+ 	}
+ 
+-	int arg_consumed = 0;
+ 
+ 	int myoptind = 1;
+ 	const char *myoptarg = NULL;
+@@ -125,7 +124,6 @@ esc_calib_main(int argc, char *argv[])
+ 
+ 		case 'd':
+ 			dev = myoptarg;
+-			arg_consumed += 2;
+ 			break;
+ 
+ 		case 'c':

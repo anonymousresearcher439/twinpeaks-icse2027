@@ -1,0 +1,61 @@
+{
+    "COMMENT": "TAKEOFF THEN LOOK AT THE STRUCTURE",
+    "HOME": {
+        "latitude": 43.078618788776964,
+        "longitude": -75.46422258200417,
+        "altitude": 216.2678
+    },
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 7.0
+            },
+            "transitions": [
+                {
+                    "target": "BriarHover",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BriarHover",
+            "args": {
+                "hover_time": 30,
+                "stare_position": {
+                    "latitude": 43.07849080694548, 
+                    "longitude": -75.46427003607182,
+                    "altitude": 216.2678
+                }
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

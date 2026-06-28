@@ -1,0 +1,28 @@
+{
+    "task_id": "2a588570-616f-41b0-8bd0-51e174dd2fb",
+    "states": [
+        {
+            "name": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.60656045854911, "longitude": -86.35550466673673, "altitude": 10, "speed": 4.0},
+                        {"latitude": 41.60669550941695, "longitude": -86.35550466673673, "altitude": 7, "speed": 4.0}
+                ],
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "altitude": 229.0237
+                },
+                "default_speed": 2.24
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "success"
+                }
+            ]
+        }
+    ]
+}
+

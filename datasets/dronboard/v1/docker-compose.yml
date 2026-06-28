@@ -1,0 +1,92 @@
+version: "3"
+
+services:
+  px4:
+    depends_on:
+      - mavros-sim
+    ports:
+      - 8080:8080/tcp
+    build: ./px4
+    environment:
+      - HEADLESS=1
+      - NO_PXH=1
+      - PX4_HOME_LAT=41.606695229356276
+      - PX4_HOME_LON=-86.35561433514731
+      - PX4_HOME_ALT=229.0
+    command: start_simulation.sh
+
+  roscore:
+    build: ./roscore
+    command: stdbuf -o L roscore
+  
+  mavros:
+    build: ./mavros
+    depends_on:
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+  
+  mqtt:
+    ports:
+      - 1883:1883/tcp
+    build: ./mqtt
+
+  mqtt_local:
+    ports:
+      - 1884:1883/tcp
+    build: ./mqtt
+
+  dr_onboard:
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    build: .
+
+  dev:
+    build: .
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    volumes:
+      - .:/catkin_ws/src/dr_onboard_autonomy:cached
+    command: bash
+  
+  mavros-sim:
+    build: ./mavros
+    depends_on:
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=udp://:14540@:14580"]
+
+  vs-code:
+    build: .
+    depends_on:
+      - mavros-sim
+      - mqtt
+      - mqtt_local
+      - roscore
+      - px4
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    volumes:
+      - .:/catkin_ws/src/dr_onboard_autonomy:cached
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+  unit_tests:
+    build: .
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+
+    volumes:
+      - .:/catkin_ws/src/dr_onboard_autonomy:cached
+    # command: bash --init-file /catkin_ws/devel/setup.bash 
+    command: bash -c '. /catkin_ws/devel/setup.bash ; pytest test' 
+

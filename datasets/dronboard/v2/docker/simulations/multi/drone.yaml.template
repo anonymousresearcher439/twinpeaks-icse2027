@@ -1,0 +1,42 @@
+name: dr-onboard-autonomy
+
+services:
+  drone_${n}:
+    extends:
+      file: ../../common.yaml
+      service: dr-onboard-autonomy
+    environment:
+      # - "ROS_NAMESPACE=drone_${n}"
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=uav${n}"
+
+    volumes:
+      - ../scripts/start-state-machine.sh:/catkin_ws/start-state-machine.sh
+    depends_on:
+      - mavros_${n}
+      - mqtt_local_${n}
+      - roscore
+      - px4
+    command: ./start-state-machine.sh drone_${n} host.docker.internal mqtt_local_${n}
+
+  mqtt_local_${n}:
+    extends:
+      file: ../../common.yaml
+      service: mqtt_local
+
+  mavros_${n}:
+    extends:
+      file: ../../common.yaml
+      service: mavros
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=uav${n}"
+    ports:
+      - "1500${n}:1500${n}/udp"
+    command:
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=udp://:1500${n}@:1600${n}"
+      - "tgt_system:=${sys_id}"

@@ -1,0 +1,137 @@
+{
+    "states": [
+      {
+        "name": "Takeoff",
+        "class": "Takeoff",
+        "transitions": [
+          {
+            "target": "FlyWaypoints-1",
+            "condition": "succeeded_takeoff"
+          },
+          {
+            "target": "Land",
+            "condition": "failed_takeoff"
+          },
+          {
+            "target": "failure",
+            "condition": "error"
+          }
+        ],
+        "args": {
+          "altitude": 5
+        }
+      },
+      {
+        "name": "FlyWaypoints-1",
+        "class": "FlyWaypoints",
+        "transitions": [
+          {
+            "target": "FlyWaypoints-2",
+            "condition": "succeeded_waypoints"
+          },
+          {
+            "target": "failure",
+            "condition": "error"
+          }
+        ],
+        "args": {
+          "waypoints": {
+            "latitude": 41.6086606438366,
+            "longitude": -86.35817639529705,
+            "altitude": 10
+          },
+          "default_speed": 4
+        }
+      },
+      {
+        "name": "FlyWaypoints-2",
+        "class": "FlyWaypoints",
+        "transitions": [
+          {
+            "target": "FlyWaypoints-3",
+            "condition": "succeeded_waypoints"
+          }
+        ],
+        "args": {
+          "waypoints": {
+            "latitude": 41.6086606438366,
+            "longitude": -86.35817639529705,
+            "relative_altitude": 20
+          },
+          "default_speed": 4
+        }
+      },
+      {
+        "name": "FlyWaypoints-3",
+        "class": "FlyWaypoints",
+        "transitions": [
+          {
+            "target": "FlyHome",
+            "condition": "succeeded_waypoints"
+          }
+        ],
+        "args": {
+          "waypoints": [
+            {
+                "latitude": 41.6086606438366,
+                "longitude": -86.35817639529705,
+                "altitude": 30
+            },
+            {
+                "latitude": 41.6086606438366,
+                "longitude": -86.35817639529705,
+                "relative_altitude": 40
+            }
+          ],
+          
+          "default_speed": 4
+        }
+      },
+      {
+        "name": "FlyHome",
+        "class": "FlyHome",
+        "transitions": [
+          {
+            "target": "Land",
+            "condition": "succeeded_waypoints"
+          },
+          {
+            "target": "failure",
+            "condition": "error"
+          }
+        ],
+        "args": {
+          "speed": 4,
+          "stare_pitch": 45
+        }
+      },
+      {
+        "name": "Land",
+        "class": "Land",
+        "transitions": [
+          {
+            "target": "Disarm",
+            "condition": "succeeded_land"
+          },
+          {
+            "target": "failure",
+            "condition": "error"
+          }
+        ]
+      },
+      {
+        "name": "Disarm",
+        "class": "Disarm",
+        "transitions": [
+          {
+            "target": "mission_completed",
+            "condition": "succeeded_disarm"
+          },
+          {
+            "target": "failure",
+            "condition": "error"
+          }
+        ]
+      }
+    ]
+  }

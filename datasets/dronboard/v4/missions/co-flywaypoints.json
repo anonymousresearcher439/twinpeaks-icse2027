@@ -1,0 +1,74 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                    { "latitude": 39.5314679862924, "longitude": -105.05994211509073, "relative_altitude": 25, "speed": 4.0 },
+                    { "latitude": 39.53146798419864, "longitude": -105.05924441690564, "relative_altitude": 25, "speed": 4.0 },
+                    { "latitude": 39.530927710124956, "longitude": -105.0592444223133, "relative_altitude": 25, "speed": 4.0 },
+                    { "latitude": 39.53092771221868, "longitude": -105.05994211509073, "relative_altitude": 25, "speed": 4.0 }
+                ]
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "GoHome"
+                },
+                {
+                    "condition": "found",
+                    "target": "AbortHover"
+                }
+            ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 5.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

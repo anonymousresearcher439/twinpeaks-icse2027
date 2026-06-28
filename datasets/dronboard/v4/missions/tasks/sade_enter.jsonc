@@ -1,0 +1,51 @@
+
+{
+    "task_id": "${task_id}",
+    "states": [
+        {
+            // THIS IS A COMMENT
+            "name": "REQUEST-ENTRY",
+            "class": "SadeEnter",
+            /*
+            
+            TESTING 
+            MULTI-LINE COMMENT
+            
+            */
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 15,
+                "stare_position": {
+                    "latitude": 41.86693108941353,
+                    "longitude": -85.90967352301443,
+                    "relative_altitude": 20
+                }
+            },
+            "transitions": [
+                {
+                    "target": "success",
+                    "condition": "allow"
+                },
+                {
+                    "target": "PROVING_GROUND",
+                    "condition": "proving_ground",
+                     "is_task_outcome": true
+                },
+                {
+                    "target": "GO_HOME",
+                    "condition": "deny",
+                     "is_task_outcome": true
+
+                },
+                {
+                    "target": "TIMEOUT!!!",
+                    "condition": "timeout",
+                     "is_task_outcome": true
+
+                }
+            ]
+        }
+    ]
+    // FOO
+}
+

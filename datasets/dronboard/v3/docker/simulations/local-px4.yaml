@@ -1,0 +1,64 @@
+name: dr-onboard-autonomy
+
+x-extends-mqtt: &mqtt-extends
+  file: ../common.yaml
+  service: mqtt_local
+
+x-extends-roscore: &roscore-extends
+  file: ../common.yaml
+  service: roscore
+
+x-extends-mavros: &mavros-extends
+  file: ../common.yaml
+  service: mavros
+
+x-extends-px4: &px4-extends
+  file: ../common.yaml
+  service: px4
+
+services:
+  mqtt_local:
+    extends: *mqtt-extends
+
+  roscore:
+    extends: *roscore-extends
+
+  mavros:
+    extends: *mavros-extends
+    command:
+      - "stdbuf"
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=udp://:15000@:16000"
+    depends_on:
+      - roscore
+
+  px4:
+    extends: *px4-extends
+    depends_on:
+      - mavros
+
+  drone:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    volumes:
+      - ./scripts/start-state-machine.sh:/catkin_ws/start-state-machine.sh
+      - ../../test/config/config.toml:/etc/dr/config.toml
+      - ../..:/catkin_ws/src/dr_onboard_autonomy:cached
+      - ../../test/data/terrain/:/usr/local/share/terrain/
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+      - px4
+    # for some reason the following doesn't work:
+    # command: ./start-state-machine.sh px4
+    # Using the script causes dr_onbaord to not receive a signal when it's time to exit
+    # as a workaround this works:
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    command: python src/dr_onboard_autonomy/state_machine.py _fcu_type:=px4 _uav_name:=Polkadot _mqtt_local_host:=mqtt_local _mqtt_host:=host.docker.internal _gimbal_type:=mavlink_gimbal_manager

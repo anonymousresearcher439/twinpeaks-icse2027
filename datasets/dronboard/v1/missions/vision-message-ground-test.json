@@ -1,0 +1,42 @@
+{
+    "states": [
+        {
+            "name": "Ready",
+            "class": "OnGround",
+            "args": {
+                "name": "--- WAITING FOR VISION MESSAGE"
+            },
+            "transitions": [
+                {
+                    "target": "Found",
+                    "condition": "found"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                },
+                {
+                    "target": "failure",
+                    "condition": "usr_initiated_preflight"
+                }
+            ]
+        },
+        {
+            "name": "Found",
+            "class": "OnGround",
+            "args": {
+                "name": "---    VISION MESSAGE RECEIVED"
+            },
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "usr_initiated_preflight"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        }
+    ]
+}

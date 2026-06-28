@@ -1,0 +1,30 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "GimbalTestFixedEuler",
+            "args": {
+                "time": 5.0,
+                "euler_angles": {
+                    "roll_deg": 0,
+                    "pitch_deg": 0,
+                    "yaw_deg": 0
+                }
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded",
+                    "target": "mission_completed"
+                }
+            ]
+        }
+    ]
+}

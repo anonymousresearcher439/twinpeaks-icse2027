@@ -1,0 +1,49 @@
+{
+    "timestamp_ms": 1728529215230,
+    "x": 1920,
+    "y": 1080,
+    "x_res": 3840,
+    "y_res": 2160,
+    "home_position": {
+        "latitude": 41.60687474402737,
+        "longitude": -86.3560624294163,
+        "altitude": 194.466,
+        "datum_ref": "ELLIPSOID_WGS84",
+        "comment": "The Shed at Peppermint Field"
+    },
+    "expected_position": {
+        "latitude": 41.606675560671704, 
+        "longitude": -86.35559197366052, 
+        "altitude": 193.943,
+        "datum_ref": "ELLIPSOID_WGS84",
+        "comment": "The East-Side X on the runway at Peppermint Field"
+    },
+    "drone_position": {
+        "latitude": 41.606469593507356,
+        "longitude": -86.3560624294163,
+        "altitude": 239.4661591018365,
+        "datum_ref": "ELLIPSOID_WGS84",
+        "comment": "The drone is 45 meters south and 45 meters up from the shed at Peppermint Field"
+    },
+    "drone_attitude_enu": {
+        "x": -0.15304591873303092, 
+        "y": 0.21263110997159387, 
+        "z": 0.6743797232066279,
+        "w": 0.6903455270798549,
+        "comment": "The drone is yawed to face North, pitched up 30 degress and rolled +5 degrees around the forward axis"
+    },
+    "gimbal_attitude_enu": null,
+    "camera_attitude_gimbal": {
+        "x": 0.0,
+        "y": 0.3826834323650898,
+        "z": 0.0,
+        "w": -0.9238795325112867,
+        "comment": "The drone is pitched down 45 degrees"
+    },
+    "camera_attitude_enu": null,
+    "camera_config": {
+        "horizontal_fov": 90,
+        "vertical_fov": 90
+    },
+    "res_topic": "DIFFERENT/vision/resp-location"
+}

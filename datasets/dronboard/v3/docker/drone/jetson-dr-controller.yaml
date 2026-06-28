@@ -1,0 +1,67 @@
+name: dr-onboard-autonomy
+
+services:
+  mavlink_router_gimbal:
+    build: ../mavlink-router
+    volumes:
+      - ../mavlink-router/gimbal.conf:/etc/mavlink-router/main.conf
+    devices:
+      - /dev/ttyTHS1:/dev/ttyTHS1
+  
+  mavlink_router_gcs:
+    build: ../mavlink-router
+    volumes:
+      - ../mavlink-router/gcs.conf:/etc/mavlink-router/main.conf
+    devices:
+      - /dev/ttyGCS:/dev/ttyGCS
+
+  roscore:
+    extends:
+      file: ../common.yaml
+      service: roscore
+
+  mavros:
+    extends:
+      file: ../common.yaml
+      service: mavros
+    devices:
+      - /dev/ttyMAVROS:/dev/ttyMAVROS
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=/dev/ttyMAVROS:921600"
+
+  mqtt_local:
+    extends:
+      file: ../common.yaml
+      service: mqtt_local
+
+  dr_onboard:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    depends_on:
+      - mavros
+      - mavlink_router_gcs
+      - mavlink_router_gimbal
+      - mqtt_local
+      - roscore
+    volumes:
+      # necessary to resolve hosts via mDNS
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+      - /etc/dr/config.toml:/etc/dr/config.toml
+      - /var/log/dr:/log
+      - /usr/local/share/terrain/:/usr/local/share/terrain/
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "bash"
+      - "-c"
+      - "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py"

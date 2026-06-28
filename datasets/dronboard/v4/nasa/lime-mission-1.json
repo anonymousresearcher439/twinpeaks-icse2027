@@ -1,0 +1,169 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "Approach-SADE-Zone",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Approach-SADE-Zone",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.865932172371124, 
+                    "longitude": -85.92077054786687,
+                    "relative_altitude": 20.0
+                },
+                "speed": 12.0
+          },
+            "transitions": [
+                {
+                    "target": "REQUEST-ENTRY",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "REQUEST-ENTRY",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 5,
+                "stare_position": {
+                    "latitude": 41.86693108941353,  
+                    "longitude": -85.90967352301443 ,
+                    "relative_altitude": 20.0
+                }
+            },
+            "transitions": [
+                {
+                    "target": "Fly-to-Survey-Point",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+         {
+            "name": "Fly-to-Survey-Point",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                    "relative_altitude": 25
+                },
+                "speed": 18.0
+          },
+            "transitions": [
+                {
+                    "target": "Live-Report",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+        "name": "Live-Report",
+        "class": "BetterCircle",
+        "args": {
+            "center_position": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                "relative_altitude": 0.0
+            },
+            "stare_position": {
+                "latitude": 41.8677867151518,  
+                "longitude": -85.90913319677297,
+                "relative_altitude": 0.0
+            },
+            "pitch": 20.0,
+            "distance": 50.0,
+            "starting_angle": 180.0,
+            "sweep_angle": 780.0,
+            "speed": 5.0
+        },
+        "transitions": [
+                {
+                    "target": "Going-Home",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+               {
+            "name": "Going-Home",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.865932172371124, 
+                    "longitude": -85.92077054786687,
+                    "relative_altitude": 20.0
+                },
+                "speed": 12.0
+          },
+            "transitions": [
+                {
+                    "target": "Request-Exit",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+          {
+            "name": "Request-Exit",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 5,
+                "stare_position": {
+                    "latitude": 41.86693108941353,  
+                    "longitude": -85.90967352301443 ,
+                    "relative_altitude": 20.0
+                }
+            },
+            "transitions": [
+                {
+                    "target": "GoHome",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 18.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

@@ -1,0 +1,54 @@
+name: dr-onboard-autonomy
+
+x-extends-mqtt: &mqtt-extends
+  file: ../common.yaml
+  service: mqtt_local
+
+x-extends-roscore: &roscore-extends
+  file: ../common.yaml
+  service: roscore
+
+x-extends-mavros: &mavros-extends
+  file: ../common.yaml
+  service: mavros
+
+x-extends-ardupilot: &ardupilot-extends
+  file: ../common.yaml
+  service: ardupilot
+
+
+services:
+  mqtt_local:
+    extends: *mqtt-extends
+
+  roscore:
+    extends: *roscore-extends
+
+  mavros:
+    extends: *mavros-extends
+    command:
+      - "/bin/start_mavros.sh"
+      - "tcp://ardupilot:5762"
+    depends_on:
+      - roscore
+      - ardupilot
+  
+  ardupilot:
+    extends: *ardupilot-extends
+
+  drone:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    volumes:
+      - ./scripts/start-state-machine.sh:/catkin_ws/start-state-machine.sh
+      - ../../test/config/config.toml:/etc/dr/config.toml
+      - ../..:/catkin_ws/src/dr_onboard_autonomy:cached
+      - ../../test/data/terrain/:/usr/local/share/terrain/
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+      - ardupilot
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    command: python src/dr_onboard_autonomy/state_machine.py _fcu_type:=ardupilot _uav_name:=Polkadot _mqtt_local_host:=mqtt_local _mqtt_host:=host.docker.internal _gimbal_type:=mavlink_gimbal_manager

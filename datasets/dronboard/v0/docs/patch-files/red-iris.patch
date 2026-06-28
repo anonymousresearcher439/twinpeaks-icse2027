@@ -1,0 +1,31 @@
+diff --git a/models/iris/iris.sdf.jinja b/models/iris/iris.sdf.jinja
+index 423ee6a..ea27a81 100644
+--- a/models/iris/iris.sdf.jinja
++++ b/models/iris/iris.sdf.jinja
+@@ -44,7 +44,7 @@
+         </geometry>
+         <material>
+           <script>
+-            <name>Gazebo/DarkGrey</name>
++            <name>Gazebo/RedBright</name>
+             <uri>file://media/materials/scripts/gazebo.material</uri>
+           </script>
+         </material>
+@@ -191,7 +191,7 @@
+         </geometry>
+         <material>
+           <script>
+-            <name>Gazebo/DarkGrey</name>
++            <name>Gazebo/White</name>
+             <uri>file://media/materials/scripts/gazebo.material</uri>
+           </script>
+         </material>
+@@ -321,7 +321,7 @@
+         </geometry>
+         <material>
+           <script>
+-            <name>Gazebo/DarkGrey</name>
++            <name>Gazebo/White</name>
+             <uri>file://media/materials/scripts/gazebo.material</uri>
+           </script>
+         </material>

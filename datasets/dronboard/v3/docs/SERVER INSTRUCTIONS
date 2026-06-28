@@ -1,0 +1,22 @@
+Note: Whenever permission denied error occurs, use "sudo" in front of the command. Every time we run docker, it creates a new instance. The github repo is under catkin/src.
+
+Open a terminal
+
+ssh -X username@sarec2.crc.nd.edu
+cd .. //navigate to /home directory
+sudo ./run.sh (will launch a terminal with five tabs and a drone instance will run in each, currently blue, green, red, white and yellow)
+
+In a new terminal, //terminal 2
+ssh ..., 
+cd ..
+sudo ./color.sh color_name //this sends the json file
+sudo ./color.sh blue (for instance)
+
+We can see the outputs in the first terminal
+
+If we git pull then we need to rebuild the docker using this:
+
+sudo docker build .
+It will generate a new_container_id, then
+sudo docker tag new_container_id simulation
+Then we are good unless new changes require additional configurations.

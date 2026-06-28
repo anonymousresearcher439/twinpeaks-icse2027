@@ -1,0 +1,123 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 25
+            },
+            "transitions": [
+                {
+                    "target": "hover stare 1",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "hover stare 1",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 60,
+                "stare_position": {
+                    "latitude": 41.86076571000205,
+                    "longitude": -85.90739172416303,
+                    "altitude": 268
+                }
+            },
+            "transitions": [
+                {
+                    "target": "hover stare 2",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "hover stare 2",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 60,
+                "stare_position": {
+                    "latitude": 41.8608960,
+                    "longitude": -85.9076091,
+                    "altitude": 272
+                }
+            },
+            "transitions": [
+                {
+                    "target": "hover stare 3",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "hover stare 3",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 60,
+                "stare_position": {
+                    "latitude": 41.8608101,
+                    "longitude": -85.9079439,
+                    "altitude": 273
+                }
+            },
+            "transitions": [
+                {
+                    "target": "hover stare 4",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "hover stare 4",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 60,
+                "stare_position": {
+                    "latitude": 41.86221322925287,
+                    "longitude": -85.9080002978138,
+                    "altitude": 274
+                }
+            },
+            "transitions": [
+                {
+                    "target": "hover last",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "hover last",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 30
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

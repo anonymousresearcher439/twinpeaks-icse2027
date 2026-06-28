@@ -1,0 +1,65 @@
+version: '1'
+services:
+  mavros:
+    # MAVLink system id should increment
+    # PX4 ports for each addictional vehical increments between ports 14540 - 14548
+    # https://docs.px4.io/v1.12/en/simulation/multi_vehicle_simulation_gazebo.html
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=uav0"
+    ports:
+      - "14540:14540/udp"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=udp://:14540@:14580", "tgt_system:=1"]
+
+
+  mavros_1:
+    # MAVLink system id should increment
+    # PX4 ports for each addictional vehical increments between ports 14540 - 14548
+    # https://docs.px4.io/v1.12/en/simulation/multi_vehicle_simulation_gazebo.html
+    build: ./mavros
+    depends_on:
+      - roscore
+    # extends:
+    #   # might not be supported: https://docs.docker.com/compose/extends/#extending-services
+    #   file: docker-compose.yml
+    #   service: mavros
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=uav1"
+    ports:
+      - "14541:14541/udp"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=udp://:14541@:14581", "tgt_system:=2"]
+
+
+  mavros_2:
+    # MAVLink system id should increment
+    # PX4 ports for each addictional vehical increments between ports 14540 - 14548
+    # https://docs.px4.io/v1.12/en/simulation/multi_vehicle_simulation_gazebo.html
+    build: ./mavros
+    depends_on:
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=uav2"
+    ports:
+      - "14542:14542/udp"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=udp://:14542@:14582", "tgt_system:=3"]
+
+
+  dev:
+    depends_on:
+      - mavros
+      - mavros_1
+      - mqtt
+      - mqtt_local
+      - roscore
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+
+# starting up services:
+# docker compose -f docker-compose.yml -f mac_multi_drone.yml up 
+
+# shutting down services: run with both files since new service in mac_multi_drone.yml
+# otherwise you will end up with an orphaned container: 
+# https://stackoverflow.com/questions/41494612/docker-compose-orphan-containers-when-overriding-services
+# docker compose -f docker-compose.yml -f mac_multi_drone.yml down

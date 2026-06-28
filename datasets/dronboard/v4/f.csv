@@ -1,0 +1,3 @@
+name,latitude,longitude,drone_registration_id,pilot_id,gcs_host,model_name,owner_id
+Fuchsia,41.6065918978977,-86.35599963759091,DRONE-FUCHSIA-1006,PILOT-FUCHSIA-206,host.docker.internal,Parrot-Anafi,OWNER-FUCHSIA-306
+

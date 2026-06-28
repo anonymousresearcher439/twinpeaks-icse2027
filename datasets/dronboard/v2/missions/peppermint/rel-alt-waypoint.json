@@ -1,0 +1,97 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "relative_altitude": 3.85
+            },
+            "transitions": [
+                {
+                    "target": "fly-to-waypoint",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "fly-to-waypoint",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": { 
+                    "latitude": 41.606560965374285,
+                    "longitude": -86.3560021538522,
+                    "relative_altitude": 12.0
+                },
+                "stare_position": {
+                    "latitude": 41.60687394458086,
+                    "longitude": -86.35600614040948,
+                    "relative_altitude": 0.0
+                },
+                "speed": 3.0
+            },
+            "transitions": [
+                {
+                    "target": "hover",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "hover",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 15,
+                "stare_position": {
+                    "latitude": 41.6068925536827, 
+                    "longitude": -86.35607195393388, 
+                    "relative_altitude": 1.0
+                }
+            },
+            "transitions": [
+                {
+                    "target": "fly-home",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        },
+        {
+            "name": "fly-home",
+            "class": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606695509416944,
+                    "longitude": -86.35550466673673,
+                    "relative_altitude": 6.0
+                },
+                "speed": 3
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

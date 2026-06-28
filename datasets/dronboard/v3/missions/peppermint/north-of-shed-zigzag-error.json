@@ -1,0 +1,86 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "relative_altitude": 25,
+                "speed": 1.5,
+                "altitude_threshold": 1.0
+            },    
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.60705637699091, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60730557971346, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60705637699091, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60730557971346, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60705637699091, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 20, "speed": 4.0},
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 40, "speed": 4.0},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 15, "speed": 3.5},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 40, "speed": 5.0},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 15, "speed": 3.5},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 40, "speed": 5.0},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 15, "speed": 3.5},                        
+                        {"latitude": 41.60721681930411, "longitude": -86.35606550023402, "relative_altitude": 40, "speed": 5.0}                 
+
+                ],
+                "default_speed": 4.0
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "LandLocation"
+                }
+            ]
+        },
+        {
+            "name": "LandLocation",
+            "class": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.60706001106275, "longitude": -86.35606868220886, "relative_altitude": 35, "speed": 5.0}
+                ],
+                "default_speed": 4.0
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+name: ⚙️ Unit Tests
+on: [push]
+
+jobs:
+  test:
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v4
+
+      - name: Build docker images
+        run: docker compose -f docker/tests-compose.yaml build
+        env:
+          TERRAIN_DATA_DIR: /tmp/terrain
+
+      - name: Run tests
+        run: docker compose -f docker/tests-compose.yaml run gh_actions_unit_tests
+        env:
+          TERRAIN_DATA_DIR: /tmp/terrain

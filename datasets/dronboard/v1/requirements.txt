@@ -1,0 +1,8 @@
+wheel
+https://mm-public-fileshare.s3.amazonaws.com/droneresponse_mathtools-0.2.3-py2.py3-none-any.whl
+https://mm-public-fileshare.s3.amazonaws.com/pymavlink-2.4.14.tar.gz
+nvector==0.7.6
+paho-mqtt>=1.5.1
+ruckig==0.6.5
+pytest==7.1.2
+debugpy

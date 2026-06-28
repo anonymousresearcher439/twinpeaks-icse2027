@@ -1,0 +1,15 @@
+version: '3'
+services:
+  mavros:
+    # For Simulation running on Mac OS
+    ports:
+      - "14540:14540/udp"
+    command: ["stdbuf", "-o", "L", "roslaunch", "--wait", "mavros", "px4.launch", "fcu_url:=udp://:14540@:14580"]  
+
+  dev:
+    depends_on:
+      - mavros
+      - mqtt
+      - mqtt_local
+      - roscore
+    command: /bin/sh -c "while sleep 1000; do :; done"

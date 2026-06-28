@@ -1,0 +1,66 @@
+services:
+  mqtt_local:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ../mqtt/drone-response.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      # Use non-standard port to prevent conflicts with the ground control mqtt
+      # This can happen when running the simulator and GCS on the same machine.
+      - 1884:1883/tcp
+
+  roscore:
+    build: ../roscore
+    ports:
+      - 11311:11311/tcp
+    command: stdbuf -o L roscore
+
+  mavros:
+    build: ../mavros
+    depends_on:
+      - roscore
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    # For companion computer
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command:
+      - "stdbuf"
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=/dev/ttyUSB0:921600?ids=1,1"
+
+  dr_onboard:
+    build: ../..
+    volumes:
+      - /etc/dr/config.toml:/etc/dr/config.toml
+      - /var/log/dr:/log
+      - /usr/local/share/terrain/:/usr/local/share/terrain/
+    cap_add:
+      - SYS_TIME
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "PYTHONUNBUFFERED=x"
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "bash"
+      - "-c"
+      - "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py"
+
+  unit_tests:
+    build: ../..
+    working_dir: /catkin_ws/src/dr_onboard_autonomy
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+    volumes:
+      - ../..:/catkin_ws/src/dr_onboard_autonomy:cached
+    command: bash -c '. /catkin_ws/devel/setup.bash ; pytest test'

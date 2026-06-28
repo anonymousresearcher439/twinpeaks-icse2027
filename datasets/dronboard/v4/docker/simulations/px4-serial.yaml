@@ -1,0 +1,15 @@
+name: dr-onboard-autonomy
+
+services:
+  px4_serial:
+    extends:
+      file: ../common.yaml
+      service: px4
+    environment:
+      # (eg. /dev/ttyMAVROS) for serial communication
+      # make sure these devices are in sync with the exposed host devices
+      - OFFBOARD_SERIAL_DEVICE=/dev/ttyMAVROS
+      - GCS_SERIAL_DEVICE=/dev/ttyGCS
+    devices:
+      - /dev/ttyMAVROS:/dev/ttyMAVROS
+      - /dev/ttyGCS:/dev/ttyGCS

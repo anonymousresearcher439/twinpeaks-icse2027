@@ -1,0 +1,85 @@
+{
+    "HOME": {
+        "latitude": 43.22996220438573,
+        "longitude": -75.41114918021859,
+        "altitude": 146.2339
+    },
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "BetterHover",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BetterHover",
+            "args": {
+                "stare_position": {
+                    "latitude": 43.23219649114969, 
+                    "longitude": -75.41508141431119,
+                    "altitude": 147
+                },
+                "pitch": 40.0,
+                "distance": 170.0,
+                "starting_angle": 55,
+                "cruising_altitude": 54.864,
+                "speed": 5.0,
+                "hover_time": 30.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_hover",
+                    "target": "BriarTravel"
+                }
+            ]
+        },
+        {
+            "name": "BriarTravel",
+            "args": {
+                "waypoint": {
+                    "latitude": 43.229962204385735,
+                    "longitude": -75.41114918021859,
+                    "altitude": 200
+                },
+                "stare_position": {
+                    "latitude": 43.23219649114969, 
+                    "longitude": -75.41508141431119,
+                    "altitude": 147
+                },
+                "cruising_altitude": 54.864,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

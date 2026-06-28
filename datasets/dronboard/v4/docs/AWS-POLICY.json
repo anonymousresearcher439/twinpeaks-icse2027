@@ -1,0 +1,54 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iot:Publish",
+        "iot:Receive",
+        "iot:PublishRetain"
+      ],
+      "Resource": [
+        "arn:aws:iot:us-east-2:746669230071:topic/sade_manager/*",
+        "arn:aws:iot:us-east-2:746669230071:topic/sadezone/*",
+        "arn:aws:iot:us-east-2:746669230071:topic/drone/*",
+        "arn:aws:iot:us-east-2:746669230071:topic/status_message*",
+        "arn:aws:iot:us-east-2:746669230071:topic/update_drone*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iot:Subscribe",
+      "Resource": [
+        "arn:aws:iot:us-east-2:746669230071:topicfilter/sade_manager/*",
+        "arn:aws:iot:us-east-2:746669230071:topicfilter/sadezone/*",
+        "arn:aws:iot:us-east-2:746669230071:topicfilter/drone/*",
+        "arn:aws:iot:us-east-2:746669230071:topicfilter/status_message*",
+        "arn:aws:iot:us-east-2:746669230071:topicfilter/update_drone*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iot:Connect",
+      "Resource": [
+        "arn:aws:iot:us-east-2:746669230071:client/sade_prototype",
+        "arn:aws:iot:us-east-2:746669230071:client/gui_listener",
+        "arn:aws:iot:us-east-2:746669230071:client/weather-service-client",
+        "arn:aws:iot:us-east-2:746669230071:client/SADE_API_CLIENT",
+        "arn:aws:iot:us-east-2:746669230071:client/sade_zone_factory",
+        "arn:aws:iot:us-east-2:746669230071:client/DROnboard1",
+        "arn:aws:iot:us-east-2:746669230071:client/Polkadot",
+        "arn:aws:iot:us-east-2:746669230071:client/mmtesting",
+        "arn:aws:iot:us-east-2:746669230071:client/canary_uav0",
+        "arn:aws:iot:us-east-2:746669230071:client/canary_uav1",
+        "arn:aws:iot:us-east-2:746669230071:client/Red",
+        "arn:aws:iot:us-east-2:746669230071:client/Crimson",
+        "arn:aws:iot:us-east-2:746669230071:client/Firebrick",
+        "arn:aws:iot:us-east-2:746669230071:client/MidnightBlue",
+        "arn:aws:iot:us-east-2:746669230071:client/Navy",
+        "arn:aws:iot:us-east-2:746669230071:client/Fuchsia",
+        "arn:aws:iot:us-east-2:746669230071:client/Lime"
+      ]
+    }
+  ]
+}

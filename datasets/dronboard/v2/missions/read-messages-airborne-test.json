@@ -1,0 +1,54 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+            },
+            "transitions": [
+                {
+                    "target": "ReadMessages",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "ReadMessages",
+            "class": "ReadMessagesAirborne",
+            "args": {
+                "message_names": [
+                    "position",
+                    "update_stare_position"
+                ]
+                
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+name: dr-onboard-autonomy
+
+x-extends-mqtt: &mqtt-extends
+  file: ../common.yaml
+  service: mqtt_local
+
+x-extends-roscore: &roscore-extends
+  file: ../common.yaml
+  service: roscore
+
+x-extends-mavros: &mavros-extends
+  file: ../common.yaml
+  service: mavros
+
+x-extends-px4: &px4-extends
+  file: ../common.yaml
+  service: px4
+
+services:
+  mqtt_local:
+    extends: *mqtt-extends
+
+  roscore:
+    extends: *roscore-extends
+
+  mavros:
+    extends: *mavros-extends
+    # For companion computer
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command:
+      - "stdbuf"
+      - "-o"
+      - "L"
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=/dev/ttyUSB0:921600?ids=1,1"
+
+  px4:
+    extends: *px4-extends
+
+  dr_onboard:
+    extends:
+      file: ../common.yaml
+      service: dr-onboard-autonomy
+    depends_on:
+      - mavros
+      - mqtt_local
+      - roscore
+    command:
+      - stdbuf
+      - "-o"
+      - "L"
+      - "bash"
+      - "-c"
+      # - "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py _uav_name:=Polkadot _mqtt_host:=10.223.0.1 _local_mqtt_host:=mqtt_local"
+      - "source /catkin_ws/devel/setup.bash ; rosrun dr_onboard_autonomy state_machine.py _uav_name:=Polkadot _mqtt_host:=host.docker.internal _local_mqtt_host:=mqtt_local"
+

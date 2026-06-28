@@ -1,0 +1,50 @@
+name: dr-onboard-autonomy
+
+services:
+  drone_${n}:
+    extends:
+      file: ../../common.yaml
+      service: dr-onboard-autonomy
+    environment:
+      # - "ROS_NAMESPACE=drone_${n}"
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=${drone_name}"
+      - "PYTHONUNBUFFERED=x"
+
+    volumes:
+      - ../scripts/start-state-machine.sh:/catkin_ws/start-state-machine.sh
+      - ../../../test/config/config.toml:/etc/dr/config.toml
+      - ../../..:/catkin_ws/src/dr_onboard_autonomy:cached
+    depends_on:
+      - mavros_${n}
+      - mqtt_local_${n}
+      - roscore
+      - px4
+    command: ./start-state-machine.sh px4 ${drone_name} mqtt_local_${n}
+
+  mqtt_local_${n}:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ../../mqtt/drone-response.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      # Use non-standard port to prevent conflicts with the ground control mqtt
+      # This can happen when running the simulator and GCS on the same machine.
+      - ${local_mqtt_port}:1883/tcp
+    
+
+  mavros_${n}:
+    extends:
+      file: ../../common.yaml
+      service: mavros
+    environment:
+      - "ROS_MASTER_URI=http://roscore:11311"
+      - "ROS_NAMESPACE=${drone_name}"
+    ports:
+      - "1500${n}:1500${n}/udp"
+    command:
+      - "roslaunch"
+      - "--wait"
+      - "mavros"
+      - "px4.launch"
+      - "fcu_url:=udp://:1500${n}@:1600${n}"
+      - "tgt_system:=${sys_id}"

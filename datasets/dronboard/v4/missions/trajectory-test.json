@@ -1,0 +1,64 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 9.5
+            },
+            "transitions": [
+                {
+                    "target": "TrajectoryOverrideMode",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "TrajectoryOverrideMode",
+            "class": "TrajectoryOverrideMode",
+            "args": {
+
+            },
+            "transitions": [
+                {
+                    "target": "FlyHome",
+                    "condition": "done"
+                }
+            ]
+        },
+        {
+            "name": "FlyHome",
+            "class": "FlyHome",
+            "args": {
+
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

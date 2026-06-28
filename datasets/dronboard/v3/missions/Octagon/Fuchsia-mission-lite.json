@@ -1,0 +1,57 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 5
+            },
+            "transitions": [
+                {
+                    "target": "Fly Octagon Lite",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Fly Octagon Lite",
+            "class": "FlyWaypoints",
+            "args": {
+                "waypoints": {
+                    "latitude": 41.60613285626334,
+                    "longitude": -86.35573700884129,
+                    "altitude": 10,
+                    "speed": 4
+                }
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

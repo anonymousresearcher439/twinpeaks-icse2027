@@ -1,0 +1,103 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 10
+            },
+            "transitions": [
+                {
+                    "target": "Fly Octagon Clockwise",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Fly Octagon Clockwise",
+            "class": "FlyWaypoints",
+            "args": {
+                "default_speed": ${speed},
+                "waypoints": [
+                    
+                    {
+                        "latitude": 41.60721965620906,
+                        "longitude": -86.35573700380857,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.606901338007475,
+                        "longitude": -86.35531288626296,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60645117073039,
+                        "longitude": -86.3553128912957,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60613285626334,
+                        "longitude": -86.35573700884129,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60613285626334,
+                        "longitude": -86.35633679659372,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60645117073039,
+                        "longitude": -86.35676091413933,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60690133800747,
+                        "longitude": -86.35676091917205,
+                        "altitude": 10
+                    },
+                    
+                    {
+                        "latitude": 41.60721965620906,
+                        "longitude": -86.35633680162644,
+                        "altitude": 10
+                    }
+                    
+                ]
+            },
+        
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

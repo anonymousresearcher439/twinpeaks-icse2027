@@ -1,0 +1,21 @@
+
+{
+    "task_id": "${task_id}",
+    "states": [
+        {
+            "name": "Hover",
+            "class": "BriarHover",
+            "args": {
+                "hover_time": 3
+            },
+            "transitions": [
+                {
+                    "target": "success",
+                    "condition": "succeeded_hover"
+                }
+            ]
+        }
+    ]
+    // FOO
+}
+

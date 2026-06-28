@@ -1,0 +1,15 @@
+name: ⚙️ Unit Tests
+on: [push]
+
+jobs:
+  test:
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v3
+
+      - name: Build docker images
+        run: docker compose -f docker/tests-compose.yaml build
+
+      - name: Run tests
+        run: docker compose -f docker/tests-compose.yaml run gh_actions_unit_tests

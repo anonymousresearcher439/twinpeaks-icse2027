@@ -1,0 +1,1031 @@
+#!/usr/bin/env python3
+
+from queue import Queue
+import copy
+import json
+import socket
+import time
+from select import select
+from threading import Lock, RLock, Thread
+from enum import Enum, auto
+from functools import partial
+from typing import Any, Callable, Optional, Union
+
+import rospy
+from diagnostic_msgs.msg import DiagnosticArray
+from mavros_msgs.msg import EstimatorStatus, ExtendedState, RCIn, State
+from sensor_msgs.msg import BatteryState, NavSatFix, Imu, TimeReference
+from std_msgs.msg import Float64, String
+from geometry_msgs.msg import TwistStamped
+from paho.mqtt.client import MQTTMessage
+
+from dr_onboard_autonomy.models import FCUState, FCUCopterMode, HeartbeatStatus
+from dr_onboard_autonomy.mqtt_client import MQTTClient
+from . message_converters import (
+    ros_battery_adapter,
+    ros_state_adapter,
+    ros_imu_adapter,
+    ros_compass_heading_adapter,
+    ros_velocity_adapter,
+    ros_position_adapter,
+    ros_relative_altitude_adapter,
+    ros_time_reference_adapter,
+)
+
+
+class AbstractMessageSender:
+    def __init__(self, name):
+        """All message senders need a name. The name is used to find the MessageHandler that need to run in response to a message."""
+        self.name = name
+
+    def start(self, to_active_state):
+        """Starts forwarding new messages to the state machine.
+
+
+        When the message sender wants to pass data to the state machine, it creates a dict to hold the data.
+        The dict will always look like the following:
+
+            example_message = {
+                'type': 'message_sender_name',
+                'data': 'example data could be anything'
+            }
+
+        The message sender then calls the given `to_state_machine` argument like so:
+
+            to_state_machine(example_message)
+
+
+        :param to_state_machine: The callback function that takes one argument, a dict. This function delivers the message to the state. This could be `state_machine.message_queue.put`
+        :type to_state_machine: Callable
+        """
+        pass
+
+    def stop(self):
+        """Stops forwarding messages to the state machine."""
+        pass
+
+
+MappingFunction = Callable[[Any], Optional[Any]]
+"""
+`MappingFunction` Type Alias Documentation
+
+The `MappingFunction` type alias defines a message transformation function. These functions are intended to take an input message from an original message sender, process or transform this input, and produce a new type of message.
+
+Usage:
+- A `MappingFunction` is provided with the original data/message as its input.
+- It converts this input message to a new type of message.
+- The function can optionally return a message. If it returns `None` then we'll just ignore the message (that is to say we will not pass it along to the state machine).
+
+Example Scenario:
+We want to convert the ROS `BatteryState` message to a models.drone.Battery message. In this case we'd create a `MappingFunction` that builds a models.drone.Battery object using the values from the BatteryState.
+
+Key Points:
+- The input to a `MappingFunction` is the original message data from a message sender. Please note: the input is _NOT_ a dict with a 'type' and 'data' key. It is the raw data from the original message sender. That is to say it's the value that's stored in message['data'].
+- The output is message data, which can be of a different type or structure, or `None` if no transformation is performed.
+- This allows for the implementation of a new message sender that can adapt or modify messages from an original sender for various purposes.
+- The MappingFunction may return the input argument as is. Or it may do so sometimes. You can use this to filter out messages that you don't want to pass along to the state machine.
+"""
+
+
+class MappedMessageSender(AbstractMessageSender):
+    """
+    A message sender that applies a transformation to messages before sending.
+
+    This wraps around another message sender and applies a mapping function to each message before sending it to the state machine.
+
+    If the mapping function returns `None`, the message is ignored and not sent to the state machine.
+    """
+    def __init__(self, name: str, mapping_function: MappingFunction, message_sender: AbstractMessageSender):
+        """
+        Initializes a new MappedMessageSender.
+        Args:
+            name (str): The name of the message sender. We will overwrite the "type"
+                field in the message with this name.
+
+            mapping_function (MappingFunction): The function that maps the original
+                message data to a value. If the function returns None, the message is ignored and nothing is sent to the state machine. if the function returns a value, the message is sent to the state machine.
+            
+            message_sender (AbstractMessageSender): The message sender that we're
+                wrapping. This is the message sender that we're going to get messages
+                from and pass along to the state machine.
+        
+        A note about combining MappedMessageSender with ReliableMessageSender.
+        You have two options:
+
+        1. Put a MappedMessageSender within a ReliableMessageSender
+        2. Put a ReliableMessageSender within MappedMessageSender
+
+        In both configurations, you need to start ReliableMessageSender's worker thread.
+        That is to say you need to call ReliableMessageSender.start_loop() before you start
+        using this.
+        """
+
+        self.name = name
+        self.mapping_function = mapping_function
+        self.message_sender = message_sender
+
+        self._to_active_state = None
+    
+    def start(self, to_active_state):
+        self._to_active_state = to_active_state
+        self.message_sender.start(self._map_and_send)
+    
+    def stop(self):
+        self.message_sender.stop()
+        self._to_active_state = None
+    
+    def _map_and_send(self, message):
+        if self._to_active_state is None:
+            return
+        
+        original_data = message['data']
+        mapped_message = self.mapping_function(original_data)
+        if mapped_message is None:
+            return
+
+        message['data'] = mapped_message
+        message['type'] = self.name
+        self._to_active_state(message)
+
+# We are using a message-driven finite state machine.
+# Some messages come from ROS.
+# This class takes ROS messages and passes them to the state machine
+#
+# It has a few important methods
+# The start method creates the Subscriber
+# The stop method unregisters the Subscriber
+#
+# The message sender has these states:
+# - STOPPED
+# - READY
+# - SENDING
+#
+# The ROSMessageMessageSender starts in the `stopped` state. In this state
+#   the message sender is not subscribed to a ROS topic and it's not passing messages to our state machine.
+# When you call start_subscriber() we create a ROS Subscriber. This is how we connect to the ROS topic.
+#   We enter the READY state after connecting to the ROS topic. In the READY state, the message sender receives ROS messages
+#    but does not pass them along to the state machine.
+# When you call start, you give provide the callback that passes the data along to the current state.
+#   from this point on, ROS messages will make their way to the active state. After calling start, the message sender enters the SENDING state.
+class ROSMessageSender(AbstractMessageSender):
+    
+    class State(Enum):
+        STOPPED = auto()
+        READY = auto()
+        SENDING = auto()
+    
+    def __init__(self, name, topic, TopicType):
+        super().__init__(name)
+        self.topic = topic
+        self.TopicType = TopicType
+        self.sub = None
+        self.to_state_machine = None
+        self.lock = RLock()
+        self.current_state = ROSMessageSender.State.STOPPED
+
+    def ros_callback(self, data):
+        message = {"type": self.name, "data": data}
+        self.send_message(message)
+
+    def start_subscriber(self):
+        with self.lock:
+            self.sub = rospy.Subscriber(self.topic, self.TopicType, self.ros_callback)
+            rospy.logdebug(f"ROS '{self.name}' message sender subscribed")
+
+            self._change_state(ROSMessageSender.State.READY)
+            rospy.logdebug(f"ROS '{self.name}' message sender ready")
+
+    def stop_subscriber(self):
+        with self.lock:
+            self.sub.unregister()
+            rospy.logdebug(f"ROS '{self.name}' message sender UNREGISTERED")
+            self.sub = None
+            self._change_state(ROSMessageSender.State.STOPPED)
+
+    def start(self, to_state_machine):
+        with self.lock:
+            if self.current_state == ROSMessageSender.State.STOPPED:
+                self.start_subscriber()
+            assert self.current_state == ROSMessageSender.State.READY
+
+            self.to_state_machine = to_state_machine
+            self._change_state(ROSMessageSender.State.SENDING)
+
+    def stop(self):
+        self.to_state_machine = None
+        if self.current_state == ROSMessageSender.State.SENDING:
+            self._change_state(ROSMessageSender.State.READY)
+        else:
+            self._change_state(ROSMessageSender.State.STOPPED)
+
+    def send_message(self, message):
+        with self.lock:
+            if self.current_state == ROSMessageSender.State.SENDING:
+                self.to_state_machine(message)
+
+    def _change_state(self, new_state):
+        with self.lock:
+            self.current_state = new_state
+            rospy.logdebug(f"ROS '{self.name}' message sender changed state to '{new_state.name}'")
+
+
+class CommandMessageSender(ROSMessageSender):
+    def __init__(self):
+        super().__init__("commands", "/birdy0/commands", String)
+        self.is_armed = None
+        self.takeoff = None
+        self.altitudereached = None
+        self.done = None
+        self.complete = None
+
+    def ros_callback(self, data):
+        self.is_armed = data == "arm"
+        self.takeoff = data == "takeoff"
+        self.altitudereached = data == "hover"
+        self.done = data == "land"
+        self.complete = data == "finish"
+
+        command_state = {
+            "is_armed": self.is_armed,
+            "takeoff": self.takeoff,
+            "altitudereached": self.altitudereached,
+            "done": self.done,
+            "complete": self.complete,
+        }
+
+        message = {"type": self.name, "data": command_state}
+        self.send_message(message)
+
+
+class RepeatTimer(AbstractMessageSender):
+    def __init__(self, name, time_limit):
+        super().__init__(name)
+        self.time_limit = time_limit
+
+        self._is_running = False
+        self.lock = Lock()
+
+        self.thread = None
+        self.to_state_machine = None
+        self.sock_read = None
+        self.sock_write = None
+
+    def _run_timer(self, name, sock_read, time_limit):
+        # To be sure that this method is thread safe
+        # it only uses parameters, local variables, method calls and function calls
+
+        last_time = time.monotonic()
+        while self.is_running():
+            read = [sock_read]
+            write = []
+            ex = [sock_read]
+
+            delta_t = time.monotonic() - last_time
+            time_remaining = time_limit - delta_t
+
+            r, _, e = select(read, write, ex, max(0.0, time_remaining))
+
+            assert sock_read not in e
+            if sock_read in r:
+                _ = sock_read.recv(2048)
+
+            delta_t = time.monotonic() - last_time
+            if delta_t > time_limit:
+                message = {"type": name, "data": delta_t}
+                self.put_message(message)
+                last_time = time.monotonic()
+
+    def put_message(self, message):
+        with self.lock:
+            if self._is_running:
+                self.to_state_machine(message)
+
+    def is_running(self):
+        with self.lock:
+            return self._is_running
+
+    def start(self, to_state_machine):
+        with self.lock:
+            assert self.thread is None
+            self._is_running = True
+            self.sock_read, self.sock_write = socket.socketpair()
+            self.to_state_machine = to_state_machine
+            self.thread = Thread(
+                target=self._run_timer,
+                daemon=True,
+                args=(self.name, self.sock_read, self.time_limit),
+            )
+            self.thread.start()
+
+    def stop(self):
+        with self.lock:
+            if not self._is_running:
+                return
+            self._is_running = False
+
+        # wake up the timer thread
+        self.sock_write.send(b"\x00")
+        # Wait for the timer thread to finish
+        self.thread.join()
+
+        # cleanup
+        self.sock_read.close()
+        self.sock_write.close()
+
+        self.thread = None
+        self.sock_read = None
+        self.sock_write = None
+        self.to_state_machine = None
+
+
+class ShutdownMessageSender(AbstractMessageSender):
+    def __init__(self):
+        super().__init__("shutdown")
+        self.lock = Lock()
+        self.to_active_state = None
+        self._is_running = True
+        self.shutdown_message = {"type": "shutdown", "data": None}
+        rospy.on_shutdown(self._rospy_stop)
+
+    def start(self, to_active_state):
+        with self.lock:
+            self.to_active_state = to_active_state
+            if not self._is_running:
+                self.to_active_state(self.shutdown_message)
+
+    def stop(self):
+        with self.lock:
+            self.to_active_state = None
+
+    def _rospy_stop(self):
+        with self.lock:
+            self._is_running = False
+            if self.to_active_state is not None:
+                self.to_active_state(self.shutdown_message)
+
+
+class MQTTMessageSender(AbstractMessageSender):
+    def __init__(self, name, topic, mqtt_client: MQTTClient):
+        super().__init__(name)
+        self.topic = topic
+        self.mqtt_client = mqtt_client
+        self.lock = RLock()
+        self.current_state = "stopped"
+
+    def _mqtt_callback(self, client, userdata, mqtt_payload: MQTTMessage):
+        # TODO should we parse the mqtt_payload as json?
+        message = {"type": self.name, "data": mqtt_payload}
+        self.send_message(message)
+
+    def send_message(self, message):
+        with self.lock:
+            if self.current_state == "sending":
+                self.to_state_machine(message)
+
+    def start_subscriber(self):
+        with self.lock:
+            self.mqtt_client.subscribe(self.topic, self._mqtt_callback)
+            rospy.loginfo(f"MQTT '{self.name}' message sender subscribed to '{self.topic}'")
+            self._change_state("started")
+            rospy.loginfo(f"MQTT '{self.name}' message sender started")
+
+    def start(self, to_active_state):
+        with self.lock:
+            self.to_state_machine = to_active_state
+            if self.current_state == "stopped":
+                self.start_subscriber()
+            self._change_state("sending")
+
+    def stop(self):
+        self._change_state("stopped")
+
+    def _change_state(self, new_state):
+        with self.lock:
+            self.current_state = new_state
+
+
+class ReliableMessageSender(AbstractMessageSender):
+    """Wraps an ordinary message sender to create a reliable one.
+
+    To the smach states, this looks like an ordinary message sender.
+    To the message sender being wrapped, this looks like a smach state.
+
+    Besides start_loop and stop_loop, its safe to call all other public methods in any order. The exact behavior of each operation depends on the
+    private state of this object.
+
+    Every public method gets turned into a command object and queued. A worker thread
+    receives each command, and does the operation specified.
+    """
+
+    class State(Enum):
+        NOT_STARTED = auto()
+        GATHERING_MESSAGES = auto()
+        PASSING_MESSAGES = auto()
+        DONE = auto()
+
+    class Command(Enum):
+        START = auto()
+        DELIVER_MESSAGE = auto()
+        ACKNOWLEDGE_MESSAGE = auto()
+        STOP = auto()
+        EXIT = auto()
+
+    def __init__(self, message_sender):
+        super().__init__(message_sender.name)
+        self.message_sender = message_sender
+        self.current_state = self.State.NOT_STARTED
+        self.thread = Thread(target=self._run)
+        # TODO consider setting the maxsize of the command_queue to a small value like 5 to detect
+        # message overrun. Right now, the command_queue doesn't have a maxsize to avoid a possible
+        # deadlock. if the queue were full and the worker thread stopped then a call to stop_loop
+        # would dead lock at self.command_queue.put({self.Command.EXIT: True}).
+        self.command_queue = Queue()
+        self.messages = list()
+        self.stop_lock = Lock()
+        self.to_active_state = None
+        self._next_message_id = 0
+
+    def start_loop(self):
+        """Start the worker thread and start the wrapped message sender to start giving us messages"""
+
+        # This is the only public method not implimented with a command for the worker thread.
+        self.thread.start()
+        rospy.on_shutdown(self.stop_loop)
+
+    def stop_loop(self, timeout=None):
+        """Tell the worker thread to exit, and join the worker thread
+
+        When the timeout argument is not None it should be a float that specifies how long to wait
+        for blocking operations.
+        """
+        # This lock protects the case that too many threads call stop at the same time
+        with self.stop_lock:
+            if self.thread.is_alive():
+                self.command_queue.put({self.Command.EXIT: True}, timeout=timeout)
+        self.thread.join(timeout=timeout)
+
+    def start(self, to_active_state):
+        assert self.thread.is_alive()
+        command = {
+            self.Command.START: to_active_state,
+        }
+        self.command_queue.put(command)
+
+    def stop(self):
+        command = {self.Command.STOP: True}
+        self.command_queue.put(command)
+
+    def acknowledge_message(self, message_id):
+        command = {self.Command.ACKNOWLEDGE_MESSAGE: message_id}
+        self.command_queue.put(command)
+
+    def deliver_message(self, message):
+        command = {self.Command.DELIVER_MESSAGE: message}
+        self.command_queue.put(command)
+
+    def _run(self):
+        self.current_state = self.State.GATHERING_MESSAGES
+
+        # We start the message sender here and route all its messages to our deliver_message method.
+        # We're putting these calls in this method to avoid a race condition. We can be more certain
+        # that these methods are called once and in the correct order since the the worker thread
+        # does it.
+        self.message_sender.start(self.deliver_message)
+
+        # create the states of our internal state machine
+        # This code was partially auto-generated
+        # for each state, we specify the method we want to run for each command.
+        state_machine = {
+            self.State.NOT_STARTED: {
+                self.Command.START: None,  # This case should be impossible
+                self.Command.DELIVER_MESSAGE: None,  # This case should be impossible
+                self.Command.ACKNOWLEDGE_MESSAGE: None,  # This case should be impossible
+                self.Command.STOP: None,  # This case should be impossible
+                self.Command.EXIT: None,  # This case should be impossible
+            },
+            self.State.GATHERING_MESSAGES: {
+                self.Command.START: self._gathering_messages_start_command,
+                self.Command.DELIVER_MESSAGE: self._gathering_messages_deliver_message_command,
+                self.Command.ACKNOWLEDGE_MESSAGE: self._gathering_messages_acknowledge_message_command,
+                self.Command.STOP: self._gathering_messages_stop_command,  # this should not be called
+                self.Command.EXIT: self._exit_command,
+            },
+            self.State.PASSING_MESSAGES: {
+                self.Command.START: self._passing_messages_start_command,  # this should not be called
+                self.Command.DELIVER_MESSAGE: self._passing_messages_deliver_message_command,
+                self.Command.ACKNOWLEDGE_MESSAGE: self._passing_messages_acknowledge_message_command,
+                self.Command.STOP: self._passing_messages_stop_command,
+                self.Command.EXIT: self._exit_command,
+            },
+            self.State.DONE: {
+                self.Command.START: None,  # This case should be impossible
+                self.Command.DELIVER_MESSAGE: None,  # This case should be impossible
+                self.Command.ACKNOWLEDGE_MESSAGE: None,  # This case should be impossible
+                self.Command.STOP: None,  # This case should be impossible
+                self.Command.EXIT: None,  # This case should be impossible
+            },
+        }
+
+        while self.current_state is not self.State.DONE:
+            state_functions = state_machine[self.current_state]
+            cmd_message = self.command_queue.get()
+            for cmd in cmd_message:
+                cmd_func = state_functions[cmd]
+                cmd_data = cmd_message[cmd]
+                cmd_func(cmd_data)
+        self.message_sender.stop()
+
+    def _exit_command(self, _):
+        self.current_state = self.State.DONE
+
+    def _gathering_messages_start_command(self, to_active_state):
+        self.to_active_state = to_active_state
+        if self.messages:
+            self._send_message(self.messages[0])
+        self.current_state = self.State.PASSING_MESSAGES
+
+    def _gathering_messages_deliver_message_command(self, message):
+        self._buffer_new_message(message)
+
+    def _gathering_messages_acknowledge_message_command(self, message_id):
+        # This is an odd case. We are not passing messages to a smach state. But someone is telling
+        # us that a message we've previously sent has now been processed.
+        # We will find the message and remove it so that it doesn't get sent in the future
+        self._remove_acknowledged_message(message_id)
+
+    def _gathering_messages_stop_command(self, _):
+        rospy.logwarn(
+            "message_sender.stop() was called but this message sender is already stopped"
+        )
+
+    def _passing_messages_start_command(self, to_state_machine):
+        # this is odd. We are already passing messages to a smach state. But we're being told to
+        # start sending messages to a new smach state. Did a smach state transition without telling
+        # its message senders to stop?
+        rospy.logwarn(
+            "message_sender.start() was called but this message sender is already started. Did a smach state transition without telling its message senders to stop? This message sender will start passing messages to the new destination"
+        )
+        self._gathering_messages_start_command(to_state_machine)
+
+    def _passing_messages_deliver_message_command(self, message):
+        # we are actively sending messages to a smach state. If there are no older messages awaiting
+        # delivery, we should send this one now. Otherwise we should queue it for delivery later.
+        is_only_messages = not self.messages
+        self._buffer_new_message(message)
+
+        if is_only_messages:
+            self._send_message(message)
+
+    def _passing_messages_acknowledge_message_command(self, message_id):
+        # we are actively sending messages to a smach state and the smach state is telling us that
+        # it has finished processing a message.
+        # We need to ensure the acknowledged message dosen't get sent again.
+        self._remove_acknowledged_message(message_id)
+
+        # If there are more messages awaiting delivery, we should send the next one now.
+        if self.messages:
+            self._send_message(self.messages[0])
+
+    def _passing_messages_stop_command(self, _):
+        self.current_state = self.State.GATHERING_MESSAGES
+
+    def _remove_acknowledged_message(self, message_id):
+        message_index = self._index_of_message_id(message_id)
+        if message_index >= 0:
+            acknowledged_msg = self.messages.pop(message_index)
+            # TODO consider if we want to logdebug this
+            rospy.logdebug("message acknowledged", acknowledged_msg)
+
+    def _index_of_message_id(self, message_id):
+        # TODO do we need to check all the messages? Maybe we can get by only checking the first one
+        for i, msg in enumerate(self.messages):
+            if "message_id" in msg:
+                if msg["message_id"] == message_id:
+                    return i
+        return -1
+
+    def _buffer_new_message(self, message):
+        message["message_id"] = self._get_next_message_id()
+        message["done"] = partial(self.acknowledge_message, message["message_id"])
+        self.messages.append(message)
+
+    def _send_message(self, message):
+        self.to_active_state(copy.copy(message))
+
+    def _get_next_message_id(self):
+        msg_id = self._next_message_id
+        self._next_message_id += 1
+        return msg_id
+
+
+class MockMessageSender(AbstractMessageSender):
+    def __init__(self, name):
+        """All message senders need a name. The name is used to find the MessageHandler that need to run in response to a message."""
+        self.name = name
+
+    def start(self, to_active_state):
+        rospy.logwarn(f"Cannot start message sender: '{self.name}'! Message sender does not exist")
+
+    def stop(self):
+        """Stops forwarding messages to the state machine."""
+        rospy.logwarn(f"Cannot stop message sender: '{self.name}'! Message sender does not exist")
+
+
+class StateMessageSender(AbstractMessageSender):
+    class State(Enum):
+        STOPPED = auto()
+        READY = auto()
+        SENDING = auto()
+    
+    def __init__(self):
+        super().__init__("state")
+        self.state_sub = None
+        self.extended_sub = None
+
+        self.lock = RLock()
+        self.to_state_machine: Callable = None
+        self.current_state = StateMessageSender.State.STOPPED
+
+        self.last_state: Optional[State] = None
+        self.last_extended: Optional[ExtendedState] = None
+
+    def ros_callback_state(self, data: State):
+        self.last_state = data
+        self._send_message_to_state()
+    
+    def ros_callback_extended_state(self, data: ExtendedState):
+        self.last_extended = data
+        if self.last_state is not None:
+            self._send_message_to_state()
+    
+    def _send_message_to_state(self):
+        output = FCUState = ros_state_adapter(self.last_state, self.last_extended)
+        message = {"type": self.name, "data": output}
+        self.send_message(message)
+
+
+    def start_subscriber(self):
+        def sub(topic, Type, callback):
+            result = rospy.Subscriber(topic, Type, callback)
+            rospy.logdebug(f"{self.name} MessageSender just subscribed to ROS topic: '{topic}'")
+            return result
+
+        with self.lock:
+            
+            self.state_sub = sub("mavros/state", State, self.ros_callback_state)
+            self.extended_sub = sub("mavros/extended_state", ExtendedState, self.ros_callback_extended_state)
+
+            self._change_state(StateMessageSender.State.READY)
+            rospy.logdebug(f"'{self.name}' message sender started")
+
+    def stop_subscriber(self):
+        rospy.logdebug(f"{self.name} message sender is attempting to stop it's ROS subs")
+        with self.lock:
+            if self.state_sub:
+                self.state_sub.unregister()
+                rospy.logdebug(f"{self.name} MessageSender just unsubscribed from 'mavros/state'")
+                self.state_sub = None
+            if self.extended_sub:
+                self.extended_sub.unregister()
+                rospy.logdebug(f"{self.name} MessageSender just unsubscribed from 'mavros/extended_state'")
+                self.extended_sub = None
+            rospy.logdebug(f"{self.name} MessageSender is done stopping it's ROS subs")
+            self._change_state(StateMessageSender.State.STOPPED)
+
+    def start(self, to_state_machine):
+        with self.lock:
+            if self.current_state == StateMessageSender.State.STOPPED:
+                self.start_subscriber()
+            assert self.current_state == StateMessageSender.State.READY
+            self.to_state_machine = to_state_machine
+            self._change_state(StateMessageSender.State.SENDING)
+
+    def stop(self):
+        self.to_state_machine = None
+        self._change_state(StateMessageSender.State.READY)
+
+    def send_message(self, message):
+        with self.lock:
+            if self.current_state == StateMessageSender.State.SENDING:
+                self.to_state_machine(message)
+
+    def _change_state(self, new_state):
+        with self.lock:
+            self.current_state = new_state
+
+
+class ReusableMessageSenders:
+    def __init__(self, mock_missing: bool = False):
+        self._mock_missing_message_senders = mock_missing
+        self.all_message_senders = {}
+        self.reliable_message_senders = []
+    
+    def populate_all(self, uav_name, mqtt_client, local_mqtt_client):
+        # self.populate_ros()
+        # TODO switch to using the newtypes
+        self.populate_newtypes()
+        self.populate_system()
+        self.populate_mqtt(uav_name, mqtt_client, local_mqtt_client)
+
+    def populate(self):
+        """
+        Initalize the ROS message senders and the system message senders
+        """
+        self.populate_ros()
+        self.populate_system()
+        
+    def populate_ros(self):
+        ros_message_senders = [
+            ("position", "mavros/global_position/global", NavSatFix),
+            ("relative_altitude", "mavros/global_position/rel_alt", Float64),
+            ("battery", "mavros/battery", BatteryState),
+            ("state", "mavros/state", State),
+            ("extended_state", "mavros/extended_state", ExtendedState),
+            ("diagnostics", "/diagnostics", DiagnosticArray),
+            ("estimator_status", "mavros/estimator_status", EstimatorStatus),
+            ("imu", "mavros/imu/data", Imu),
+            ("compass_hdg", "mavros/global_position/compass_hdg", Float64),
+            ("velocity", "mavros/global_position/raw/gps_vel", TwistStamped),
+            ("rcin", "mavros/rc/in", RCIn),
+        ]
+        for name, topic, TopicType in ros_message_senders:
+            if name in self.all_message_senders:
+                rospy.logwarn(f"Message sender named '{name}' already exists (skipping initialization)")
+                continue
+            self.all_message_senders[name] = ROSMessageSender(name, topic, TopicType)
+    
+    def populate_newtypes(self):
+        
+        # I need a named tuple here with two fields: tx_func, ros_args
+        from collections import namedtuple
+        SenderArgs = namedtuple('SenderArgs', ['name', 'tx_func', 'ros_args'])
+
+        senders = [
+            SenderArgs("battery", ros_battery_adapter, ("battery", "mavros/battery", BatteryState)),
+            SenderArgs("imu", ros_imu_adapter, ("imu", "mavros/imu/data", Imu)),
+            SenderArgs("compass_hdg", ros_compass_heading_adapter, ("compass_hdg", "mavros/global_position/compass_hdg", Float64)),
+            SenderArgs("velocity", ros_velocity_adapter, ("velocity", "mavros/global_position/raw/gps_vel", TwistStamped)),
+            SenderArgs("position", ros_position_adapter, ("position", "mavros/global_position/global", NavSatFix)),
+            SenderArgs("relative_altitude", ros_relative_altitude_adapter, ("relative_altitude", "mavros/global_position/rel_alt", Float64)),
+            SenderArgs("time_reference", ros_time_reference_adapter, ("time_reference", "mavros/time_reference", TimeReference)),
+        ]
+
+        for args in senders:
+            name = args.name
+            func = args.tx_func
+            ros_msg_sender = ROSMessageSender(*args.ros_args)
+            mapped_msg_sender = MappedMessageSender(name, func, ros_msg_sender)
+            self.all_message_senders[name] = mapped_msg_sender
+        
+        state_message_sender = StateMessageSender()
+        self.all_message_senders[state_message_sender.name] = state_message_sender
+    
+    def populate_system(self):
+        system_message_senders = [
+            ("commands", CommandMessageSender),
+            ("shutdown", ShutdownMessageSender),
+        ]
+        for name, MessageSenderClass in system_message_senders:
+            if name in self.all_message_senders:
+                rospy.logwarn(f"Message sender named '{name}' already exists (skipping initialization)")
+                continue
+            self.all_message_senders[name] = MessageSenderClass()
+    
+    def populate_mqtt(self, uav_name, mqtt_client, local_mqtt_client):
+        """
+        Initalize the MQTT message senders
+        """
+        reliable_mqtt_senders = [
+            ('airlease_status', f"drone/{uav_name}/airlease/status", mqtt_client),
+            ("abort", "all-drones/abort", mqtt_client),
+            ("stop_following", 'stop_following', local_mqtt_client),
+            ("target_position", "target_position", mqtt_client),
+            ("update_stare_position", f"drone/{uav_name}/stare-position", mqtt_client),
+            ("cancel_current_task", f"drone/{uav_name}/task/cancel-current", mqtt_client),
+            ("end_task_loop", f"drone/{uav_name}/task/end-task-loop", mqtt_client),
+        ]
+        for  name, topic, client in reliable_mqtt_senders:
+            if name in self.all_message_senders:
+                rospy.logwarn(f"Message sender named '{name}' already exists (skipping initialization)")
+                continue
+            sender = ReliableMessageSender(MQTTMessageSender(name, topic, client))
+            self.add(sender)
+
+        mqtt_senders = [
+            ("mission_spec", f"drone/{uav_name}/mission-spec", mqtt_client),
+            ("new_task", f"drone/{uav_name}/task/new", mqtt_client),
+            ("vision_found", 'dr-onboard/found', local_mqtt_client),
+            ("vision_request", 'dr-onboard/req-location-from-frame-data', local_mqtt_client),
+            ("vision_approve", f"drone/{uav_name}/vision/approve", mqtt_client),
+        ]
+        for  name, topic, client in mqtt_senders:
+            if name in self.all_message_senders:
+                rospy.logwarn(f"Message sender named '{name}' already exists (skipping initialization)")
+                continue
+            sender = MQTTMessageSender(name, topic, client)
+            self.add(sender)
+        
+        if "heartbeat_status" not in self.all_message_senders:
+            heartbeat_message_sender = HeartbeatMessageSender(
+                mqtt_client=mqtt_client,
+                hover_threshold=20,
+                rtl_threshold=60
+            )
+            heartbeat_message_sender.start_heartbeat()
+            self.add(heartbeat_message_sender)
+        else:
+            rospy.logwarn(f"Message sender named 'heartbeat' already exists (skipping initialization)")
+
+    def find(self, name):
+        if name in self.all_message_senders:
+            return self.all_message_senders[name]
+        
+        rospy.logwarn(f"Could not find message sender named '{name}'")
+        if self._mock_missing_message_senders:
+            return MockMessageSender(name)
+
+    def add(self, message_sender):
+        name = message_sender.name
+        self.all_message_senders[name] = message_sender
+        if type(message_sender) == ReliableMessageSender:
+            self.reliable_message_senders.append(message_sender)
+            message_sender.start_loop()
+
+    def stop(self):
+        for message_sender in self.reliable_message_senders:
+            message_sender.stop_loop()
+
+
+class HeartbeatMessageSender(AbstractMessageSender):
+    """
+    MQTT message sender that interprets heartbeat messages and outputs a heartbeat status
+    
+    Expects MQTT heartbeat messages from ground control in the following format:
+    topic = "heartbeat"
+    data = {
+        "heartbeat" : 15.234
+        "service_id" : 12
+    }
+
+    Sends MQTT heartbeat status messages on local mqtt in the following format:
+    topic = "heartbeat_status"
+    data = {
+        "status" : models.drone.HeartbeatStatus
+    }
+    """
+    repeat_timer_loop: int = 1
+
+    def __init__(
+        self,
+        mqtt_client : MQTTClient,
+        hover_threshold : int,
+        rtl_threshold : int
+    ):
+        '''
+        _on_heartbeat_message runs on mqtt thread separate from the RepeatTimer thread where 
+        _on_heartbeat_check runs. Using a thread lock to keep functions running simultaneaously
+        '''
+        super().__init__("heartbeat_status")
+        self._lock = RLock()
+        self.heartbeat_service_id: Union[int, None] = None
+        self._latest_ground_heartbeat: int = 0
+        self._last_heartbeat_confirmed: int = 0
+        self.last_time_confirmed: float = time.monotonic()
+        self._mqtt_client = mqtt_client
+        self.to_active_state = None
+
+        self._mqtt_client.subscribe(
+            topic="heartbeat",
+            callback=self._on_heartbeat_message
+        )
+
+        '''
+        add hover_threshold check so not < 2x RepeatTimer
+        '''
+        if hover_threshold < 2 * self.repeat_timer_loop:
+            self.hover_threshold = 2 * self.repeat_timer_loop
+            rospy.logwarn(
+                "HeartbeatMessageSender - defaulted hover_threshold to minimum allowable: %s",
+                2 * self.repeat_timer_loop
+            )
+        else:
+            self.hover_threshold = hover_threshold
+
+        '''
+        make sure rtl_threshold >= hover_threshold
+        '''
+        if rtl_threshold < self.hover_threshold:
+            self.rtl_threshold = self.hover_threshold
+            rospy.logwarn(
+                "HeartbeatMessageSender - defaulted rtl_threshold to match hover_threshold"
+            )
+        else:
+            self.rtl_threshold = rtl_threshold
+
+        self._heartbeat_check = RepeatTimer(
+            name="heartbeat_check",
+            time_limit=self.repeat_timer_loop
+        )
+    
+    def start(self, to_active_state):
+        """Starts forwarding new messages to the state machine.
+
+
+        When the message sender wants to pass data to the state machine, it creates a dict to hold the data.
+        The dict will always look like the following:
+
+            example_message = {
+                'type': 'message_sender_name',
+                'data': 'example data could be anything'
+            }
+
+        The message sender then calls the given `to_state_machine` argument like so:
+
+            to_state_machine(example_message)
+
+
+        :param to_state_machine: The callback function that takes one argument, a dict. This function delivers the message to the state. This could be `state_machine.message_queue.put`
+        :type to_state_machine: Callable
+        """
+        with self._lock:
+            self.to_active_state = to_active_state
+
+
+    def start_heartbeat(self):
+        rospy.logdebug("HeartbeatMessageSender - starting heartbeat check")
+        self._heartbeat_check.start(self._on_heartbeat_check)
+
+
+    def stop_heartbeat(self):
+        rospy.logdebug("HeartbeatMessageSender - stopping heartbeat check")
+        self._heartbeat_check.stop()
+
+
+    def _on_heartbeat_message(self, client, userdata, mqtt_payload):
+        with self._lock:
+            data = json.loads(mqtt_payload.payload)
+            if data["service_id"] != self.heartbeat_service_id:
+                '''
+                re-initialize heartbeat logic on new heartbeat service id
+                '''
+                rospy.logdebug("HeartbeatMessageSender - received new heartbeat service id")
+                self.heartbeat_service_id = data["service_id"]
+                self._last_heartbeat_confirmed = data["heartbeat"]
+                self._latest_ground_heartbeat = data["heartbeat"]
+                self.last_time_confirmed = time.monotonic()
+            else:
+                rospy.logdebug(
+                    f"HeartbeatMessageSender - received new heartbeat {data['heartbeat']}"
+                )
+                self._latest_ground_heartbeat = data["heartbeat"]
+
+    def _output_message(
+            self,
+            status_value: Union[HeartbeatStatus]):
+        if self.to_active_state == None:
+            rospy.logdebug(
+                f"HeartbeatMessageSender - skipping {status_value} message (no active state)"
+            )
+            return
+
+        rospy.logdebug(f"HeartbeatMessageSender - sending {status_value} message")
+        message = {
+            "type": "heartbeat_status",
+            "data": {
+                "status" : status_value.value
+            }
+        }
+        self.to_active_state(message)
+
+    def _on_heartbeat_check(self, message):
+        with self._lock:
+            if self._last_heartbeat_confirmed < self._latest_ground_heartbeat:
+                self._last_heartbeat_confirmed = self._latest_ground_heartbeat
+                self.last_time_confirmed = time.monotonic()
+
+            if self._send_rtl_status():
+                self._output_message(HeartbeatStatus.RTL)
+
+            if self._send_hover_status():
+                self._output_message(HeartbeatStatus.HOVER)
+
+            if self._send_continue_status():
+                self._output_message(HeartbeatStatus.CONTINUE)
+
+    def _send_hover_status(self):
+        return (
+            (time.monotonic() - self.last_time_confirmed) > self.hover_threshold
+            and
+            (time.monotonic() - self.last_time_confirmed) <= self.rtl_threshold
+        )
+            
+
+    def _send_rtl_status(self):
+        return (time.monotonic() - self.last_time_confirmed) > self.rtl_threshold
+
+
+    def _send_continue_status(self):
+        return ((time.monotonic() - self.last_time_confirmed) < self.hover_threshold)
+
+
+

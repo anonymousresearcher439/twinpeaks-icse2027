@@ -1,0 +1,97 @@
+package edu.nd.dronology.core.collisionavoidance.guidancecommands;
+
+import java.util.Arrays;
+
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+
+/**
+ * A command that tells a UAV to fly in a direction for a specified amount of time.
+ */
+public class NedCommand extends Command {
+    private final double north, east, down, time;
+
+    /**
+     * <p>
+     * Creates a command that tells a UAV to fly in the direction given as a NED vector for the given amount of time.
+     * </p>
+     *
+     * <p>
+     * Each component of the NED vector is given in meters per second. The time parameter is given in seconds.
+     * </p>
+     *
+     * <p>
+     *     For example, to create a NedCommand that tells the UAV to fly north at 5 meters per second for 10 seconds.
+     *     <pre>
+     *         {@code
+     *         NedCommand north = new NedCommand(5, 0, 0, 10);
+     *         }
+     *     </pre>
+     * </p>
+     *
+     * @param north the north component of the velocity vector given in meters per second
+     * @param east the east component of the velocity vector given in meters per second
+     * @param down the down component of the velocity vector given in meters per second
+     * @param time the amount of time to fly at the given velocity in seconds
+     */
+    public NedCommand(double north, double east, double down, double time) {
+        this.north = north;
+        this.east = east;
+        this.down = down;
+        this.time = time;
+    }
+
+    public NedCommand(Vector3D vec, double time) {
+        this(vec.getX(), vec.getY(), vec.getZ(), time);
+	}
+
+	/**
+     *
+     * @return the north component of the velocity vector in meters per second
+     */
+    public double getNorth() {
+        return north;
+    }
+
+    /**
+     *
+     * @return the east component of the velocity vector in meters per second
+     */
+    public double getEast() {
+        return east;
+    }
+
+    /**
+     *
+     * @return the down component of the velocity vector in meters per second
+     */
+    public double getDown() {
+        return down;
+    }
+
+    /**
+     *
+     * @return the amount of time to fly at the given velocity in seconds
+     */
+    public double getTime() {
+        return time;
+    }
+
+    @Override
+    public String toString() {
+        return "NedCommand(" + north + " N, " + east + " E, " + down +" D, " + time + " seconds)";
+    }
+
+    @Override
+    public boolean equals(Object anObject) {
+        if (this == anObject) {
+            return true;
+        }
+        if (anObject instanceof NedCommand) {
+            NedCommand other = (NedCommand)anObject;
+            double[] selfData = {this.getNorth(), this.getEast(), this.getDown(), this.getTime()};
+            double[] otherData = {other.getNorth(), other.getEast(), other.getDown(), other.getTime()};
+            return Arrays.equals(selfData, otherData);
+        }
+        return false;
+    }
+}

@@ -1,0 +1,89 @@
+{
+    "COMMENT": "BRIAR-LIKE mission where the drone looks at the structure",
+    "HOME": {
+        "latitude": 43.078618788776964,
+        "longitude": -75.46422258200417,
+        "altitude": 216.2678
+    },
+    "states": [        
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 7.0
+            },
+            "transitions": [
+                {
+                    "target": "BetterHover",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BetterHover",
+            "args": {
+                "stare_position": {
+                    "latitude": 43.07849080694548, 
+                    "longitude": -75.46427003607182,
+                    "altitude": 216.2678
+                },
+                "pitch": 20.556,
+                "distance": 42.72,
+                "starting_angle": 25.0,
+                "cruising_altitude": 10,
+                "speed": 3.0,
+                "hover_time": 30.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_hover",
+                    "target": "BriarTravel"
+                }
+            ]
+        },
+        {
+            "name": "BriarTravel",
+            "args": {
+                "waypoint": {
+                    "latitude": 43.078618788776964,
+                    "longitude": -75.46422258200417,
+                    "altitude": 223.26779999891417
+                },
+                "stare_position": {
+                    "latitude": 43.07855129500752,
+                    "longitude": -75.46453774805093,
+                    "altitude": 216.2678
+                },
+                "cruising_altitude": 10,
+                "speed": 3.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

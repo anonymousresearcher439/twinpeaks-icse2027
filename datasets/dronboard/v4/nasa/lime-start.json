@@ -1,0 +1,120 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "Approach-SADE-Zone",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Approach-SADE-Zone",
+            "class": "Waypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.865932172371124, 
+                    "longitude": -85.92077054786687,
+                    "relative_altitude": 20.0
+                },
+                "speed": 12.0
+          },
+            "transitions": [
+                {
+                    "target": "REQUEST-ENTRY",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },       
+        {
+            "name": "REQUEST-ENTRY",
+            "class": "SadeEnter",
+            "args": {
+                "sade_zone_id": "Chain-Lake-SADE",
+                "timeout": 15,
+                "stare_position": {
+                    "latitude": 41.86693108941353,  
+                    "longitude": -85.90967352301443 ,
+                    "relative_altitude": 20.0
+                }
+            },
+            "transitions": [
+                {
+                    "target": "Enter-SADE-Zone",
+                    "condition": "allow"
+                },
+                {
+                    "target": "FlytoProvingGround",
+                    "condition": "proving_ground"
+                },
+                {
+                    "target": "GoHome",
+                    "condition": "deny"
+                },     
+                {
+                    "target": "Enter-SADE-Zone",
+                    "condition": "timeout"
+                }                              
+            ]
+        },
+        {
+            "name": "Enter-SADE-Zone",
+            "class": "RunTasks",
+            "transitions": [
+                {
+                    "condition": "success",
+                    "target": "GoHome"
+                }
+            ]
+        },
+        {
+            "name": "FlytoProvingGround",
+            "class": "RunTasks",
+            "transitions": [
+                {
+                    "condition": "success",
+                    "target": "GoHome"
+                }
+            ]
+        },
+        {
+            "name": "GoHome",
+            "class": "FlyHome",
+
+            "args": {
+                "speed": 18.0,
+                "stare_pitch": 45.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

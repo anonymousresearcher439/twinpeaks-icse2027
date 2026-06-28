@@ -1,0 +1,104 @@
+{
+    "HOME": {
+        "latitude": 43.22997956743378,
+        "longitude": -75.41077074517071,
+        "altitude": 146.1364
+    },
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "BetterHover",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "BetterHover",
+            "args": {
+                "stare_position": {
+                    "latitude": 43.231541869042104,
+                    "longitude": -75.41383883449247,
+                    "altitude": 146.8344
+                },
+                "pitch": 15.0,
+                "distance": 500.0,
+                "starting_angle": 100.0,
+                "hover_time": 30.0,
+                "cruising_altitude": 30.48,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_hover",
+                    "target": "BriarTravel"
+                }
+            ]
+        },
+        {
+            "name": "BriarTravel",
+            "args": {
+                "waypoint": {
+                    "latitude": 43.22997956743379,
+                    "longitude": -75.41077074517071,
+                    "altitude": 176.71389999704735
+                },
+                "stare_position": {
+                    "latitude": 43.231541869042104,
+                    "longitude": -75.41383883449247,
+                    "altitude": 146.8344
+                },
+                "cruising_altitude": 30.48,
+                "speed": 5.0
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded_waypoints",
+                    "target": "Land"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

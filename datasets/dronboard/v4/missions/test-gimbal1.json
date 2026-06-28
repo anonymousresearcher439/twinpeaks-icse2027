@@ -1,0 +1,21 @@
+{
+    "states": [
+        {
+            "name": "GimbalTestStarePoint",
+            "args": {
+                "time": 5.0,
+                "stare_position": {
+                    "latitude": 41.6068925536827,
+                    "longitude": -86.35607195393388,
+                    "altitude": 229.0237
+                }
+            },
+            "transitions": [
+                {
+                    "condition": "succeeded",
+                    "target": "mission_completed"
+                }
+            ]
+        }
+    ]
+}

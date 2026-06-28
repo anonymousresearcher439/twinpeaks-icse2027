@@ -1,0 +1,297 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "OnGround",
+            "transitions": [
+                {
+                    "target": "Preflight",
+                    "condition": "usr_initiated_preflight"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Preflight",
+            "transitions": [
+                {
+                    "target": "Standby",
+                    "condition": "succeeded_preflight"
+                },
+                {
+                    "target": "OnGround",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Standby",
+            "transitions": [
+                {
+                    "target": "Arm",
+                    "condition": "succeeded_standby"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                },
+                {
+                    "target": "OnGround",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "FlyWaypoints",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                },
+                {
+                    "target": "Arm",
+                    "condition": "error"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "human_control"
+                }
+            ]
+        },
+        {
+            "name": "FlyWaypoints",
+            "transitions": [
+                {
+                    "target": "Hover",
+                    "condition": "succeeded_waypoints"
+                },
+                {
+                    "target": "Takeoff",
+                    "condition": "error"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "human_control"
+                },
+                {
+                    "target": "AbortHover",
+                    "condition": "abort"
+                },
+                
+                {"target": "Vision",
+                "condition": "found"
+                }
+            ],
+            
+            "args": {
+                "target_gps_location":
+                    {
+                        "latitude": 41.70573086523541,
+                        "longitude": -86.24421841999177,
+                        "altitude": 200
+                    }
+                ,
+                "mission_mode": 
+                    {
+                        "mode": 0
+                    }
+            }
+        },
+        
+        {
+            "name": "Vision",
+            "transitions": [
+                {
+                    "target": "Tracking",
+                    "condition": "victim_near"
+                },
+                {
+                    "target": "Land",
+                    "condition": "do_land"
+                
+                }
+            ]
+        },
+        {
+            "name": "Searching",
+            "transitions": [
+                {
+                    "target": "PossibleVictimDetected",
+                    "condition": "succeeded_searching"
+                },
+                {
+                    "target": "ReturnHome",
+                    "condition": "cmd_return"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "PossibleVictimDetected",
+            "transitions": [
+                {
+                    "target": "Searching",
+                    "condition": "usr_refutes_victim"
+                },
+                {
+                    "target": "VictimFound",
+                    "condition": "usr_confirms_victim"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "VictimFound",
+            "transitions": [
+                {
+                    "target": "Searching",
+                    "condition": "cmd_search"
+                },
+                {
+                    "target": "Tracking",
+                    "condition": "cmd_track"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Hover",
+            "transitions": [
+                {
+                    "target": "ReturnHome",
+                    "condition": "succeeded_hover"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "human_control"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Dropping",
+            "transitions": [
+                {
+                    "target": "ReturnHome",
+                    "condition": "succeeded_dropping"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Tracking",
+            "transitions": [
+                {
+                    "target": "ReturnHome",
+                    "condition": "succeeded_tracking"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "ReturnHome",
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_return_home"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "error"
+                },
+                {
+                    "target": "HumanControl",
+                    "condition": "human_control"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                },
+                {
+                    "target": "failure",
+                    "condition": "error"
+                }
+            ]
+        }
+    ],
+    "waypoints": [
+        {
+            "latitude": 41.70573086523541,
+            "longitude": -86.24421841999177,
+            "altitude": 20,
+            "velocity": 20
+        },
+        {
+            "latitude": 41.706169,
+            "longitude": -86.243779,
+            "altitude": 25,
+            "velocity": 18
+        },
+        {
+            "latitude": 41.70573086523541,
+            "longitude": -86.24421841999177,
+            "altitude": 20,
+            "velocity": 20
+        }
+    ]
+}

@@ -1,0 +1,78 @@
+{
+    "states": [
+        {
+            "name": "Takeoff",
+            "args": {
+                "altitude": 20
+            },
+            "transitions": [
+                {
+                    "target": "Fly to Lime Start",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "Fly to Lime Start",
+            "class": "FlyWaypoints",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.86284570179305, "longitude": -85.90779576022366, "altitude": 40, "speed": 4.0}
+                ],
+                "default_speed": 4.0
+            },
+            "transitions": [
+                {
+                    "target": "RunTasks",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "RunTasks",
+            "class": "RunTasks",
+            "transitions": [
+                {
+                    "condition": "success",
+                    "target": "FlyHome"
+                }
+            ]
+        },
+        {
+            "name": "FlyHome",
+            "args": {
+                "speed": 4,
+                "stare_pitch": 45
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}
+

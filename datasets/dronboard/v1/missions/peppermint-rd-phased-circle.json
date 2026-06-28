@@ -1,0 +1,114 @@
+{
+    "states": [
+        {
+            "name": "MISSION_PREPARATION",
+            "transitions": [
+                {
+                    "target": "OnGround",
+                    "condition": "MissionConfigured"
+                }
+            ]
+        },
+        {
+            "name": "Preflight",
+            "transitions": [
+                {
+                    "target": "Arm",
+                    "condition": "succeeded_preflight"
+                }
+            ]
+        },
+
+        {
+            "name": "Arm",
+            "transitions": [
+                {
+                    "target": "Takeoff",
+                    "condition": "succeeded_armed"
+                }
+            ]
+        },
+        {
+            "name": "Takeoff",
+            "transitions": [
+                {
+                    "target": "PhasedCircle",
+                    "condition": "succeeded_takeoff"
+                },
+                {
+                    "target": "Land",
+                    "condition": "failed_takeoff"
+                }
+            ]
+        },
+        {
+            "name": "PhasedCircle",
+            "args": {
+                "center_position":{
+                    "latitude": 41.60669879284219, 
+                    "longitude": -86.35549049728084,
+                    "altitude": 230.0
+                },
+                "stare_position": {
+                    "latitude": 41.606881978397986, 
+                    "longitude": -86.3560259537521,
+                    "altitude": 229.02
+                },
+                "pitch": 33.75,
+                "distance": 36.06,
+                "starting_angle": 90,
+                "total_sweep_angle": 135,
+                "speed": 2.5,
+                "cruising_altitude": 15,
+                "number_arcs": 1,
+                "pause_time": 5
+            },
+            "transitions": [
+                {
+                    "target": "BriarWaypoint",
+                    "condition": "succeeded_circle"
+                }
+            ]
+        },
+        {
+            "name": "BriarWaypoint",
+            "args": {
+                "waypoint": {
+                    "latitude": 41.606695509416944,
+                    "longitude": -86.35550466673673,
+                    "altitude": 240.0
+                },
+                "stare_position": {
+                    "latitude": 41.6068925536827,
+                    "longitude": -86.35607195393388,
+                    "altitude": 229.0237
+                },
+                "speed": 2.5
+            },
+            "transitions": [
+                {
+                    "target": "Land",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        },
+        {
+            "name": "Land",
+            "transitions": [
+                {
+                    "target": "Disarm",
+                    "condition": "succeeded_land"
+                }
+            ]
+        },
+        {
+            "name": "Disarm",
+            "transitions": [
+                {
+                    "target": "mission_completed",
+                    "condition": "succeeded_disarm"
+                }
+            ]
+        }
+    ]
+}

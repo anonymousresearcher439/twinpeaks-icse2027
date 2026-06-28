@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="latitude" default="41.70573086523541"/>
+    <arg name="longitude" default="-86.24421841999177"/>
+    <arg name="altitude" default="100"/>
+    <arg name="px4_path" default="$(find px4)"/>
+    <arg name="HEADLESS" default="0"/>
+
+    <node name="px4_simulator" pkg="dr_onboard_autonomy" type="px4_simulator.py" output="screen">
+        <param name="latitude" value="$(arg latitude)"/>
+        <param name="longitude" value="$(arg longitude)"/>
+        <param name="altitude" value="$(arg altitude)"/>
+        <param name="px4_path" value="$(arg px4_path)"/>
+        <param name="HEADLESS" value="$(arg HEADLESS)"/>
+    </node>
+</launch>

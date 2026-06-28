@@ -1,0 +1,24 @@
+
+{
+    "task_id": "63cfb7d9-09bf-438b-bfcd-8f100691d0b3",
+    "states": [
+        {
+            "name": "Fly to Red Waypoint",
+            "class": "FlyWaypoints",
+            "comment": "This is near where red is hovering",
+            "args": {
+                "waypoints": [
+                        {"latitude": 41.86299655891315, "longitude": -85.90944537149926, "altitude": 40}
+                ],
+                "default_speed": 4.0
+            },
+            "transitions": [
+                {
+                    "target": "success",
+                    "condition": "succeeded_waypoints"
+                }
+            ]
+        }
+    ]
+}
+

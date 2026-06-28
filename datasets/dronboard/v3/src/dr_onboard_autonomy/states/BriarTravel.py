@@ -1,0 +1,127 @@
+import copy
+
+from dr_onboard_autonomy.briar_helpers import (
+    convert_tuple_to_LlaDict,
+    LlaDict,
+    BriarLla
+)
+from dr_onboard_autonomy.models import CopterDrone
+from dr_onboard_autonomy.state_factory import register_state, STANDARD_TRANSITIONS_FLYING
+
+from .BaseState import BaseState
+from .BriarWaypoint import BriarWaypoint
+
+
+
+"""Example JSON:
+
+{
+    "name": "BriarTravel",
+    "class": "BriarTravel",
+    "args": {
+        "waypoint": {
+            "latitude": 41.606508018693546,
+            "longitude": -86.35685068219577,
+            "relative_altitude": 22
+        },
+        "stare_position": {
+            "latitude": 41.606879523876685, 
+            "longitude": -86.35603187231904,
+            "relative_altitude": 1.0
+        },
+        "cruising_altitude": 30.0,
+        "speed": 8.0
+    },
+    "transitions": [
+        {
+            "target": "BriarWaypoint",
+            "condition": "succeeded_waypoints"
+        }
+    ]
+}
+
+"""
+
+
+@register_state(default_transitions=STANDARD_TRANSITIONS_FLYING)
+class BriarTravel(BaseState):
+    def __init__(
+        self,
+        waypoint:LlaDict,
+        stare_position:LlaDict=None,
+        cruising_altitude=29.0,
+        speed:float=5.0,
+        **kwargs,
+    ):
+        """
+        Flies the drone to the specified waypoint, taking a path that goes over
+        the trees. Here's how:
+
+        1. The drone flies up (or down) to the crusing_altitude.
+        2. It flies to the waypoint's latitude and longitude while staying at
+            the cruising altitude.
+        3. It flies down (or up) to the waypoint
+
+        Args:
+            waypoint: the drone's final destination. The altitude is AMSL.
+            stare_position: where the camera looks. It's alt is AMSL
+            cruising_altitude: The altitude that the drone maintains during
+                horizontal traversal. Specified as meters above ground level,
+                where ground level is determined by the location where the drone
+                was armed.
+            speed: how fast the drone will fly in meters per second. 
+        """
+        kwargs["outcomes"] = self._process_outcomes(kwargs, ["succeeded_waypoints"], STANDARD_TRANSITIONS_FLYING.keys())
+
+        
+        super().__init__(**kwargs)
+
+        self.waypoint = BriarLla(waypoint, is_amsl=True)
+
+        if stare_position is None:
+            stare_position = waypoint
+        self.stare_position = BriarLla(stare_position, is_amsl=True)
+        
+        self.cruising_altitude = cruising_altitude
+        self.speed = float(speed)
+        self.kwargs = kwargs
+        
+    def on_entry(self, userdata):
+        home = self.drone.data.arm_position
+        home = home.latitude, home.longitude, home.altitude
+        home = convert_tuple_to_LlaDict(home)
+        home = BriarLla(home, is_amsl=False)
+        move_alt_amsl = home.amsl.lla.alt + self.cruising_altitude
+
+        drone: CopterDrone = self.drone
+        current_location = drone.data.location.get_position()
+        current_location_amsl = current_location.to_amsl()
+        wp1 = current_location_amsl.latitude, current_location_amsl.longitude, move_alt_amsl
+        wp1 = convert_tuple_to_LlaDict(wp1)
+        wp1 = BriarLla(wp1, is_amsl=True)
+
+        wp2 = self.waypoint.amsl.lla
+        wp2 = wp2.lat, wp2.lon, move_alt_amsl
+        wp2 = convert_tuple_to_LlaDict(wp2)
+        wp2 = BriarLla(wp2, is_amsl=True)
+
+        wp3 = self.waypoint
+
+        waypoints = [wp1, wp2, wp3]
+
+        for wp in waypoints:
+            args = copy.copy(self.kwargs)
+            args.update({
+                'waypoint': wp.amsl.dict,
+                'stare_position': self.stare_position.amsl.dict,
+                'speed': self.speed,
+                'data': copy.copy(self.data),
+                'name': self.name,
+            })
+            fly_waypoint_state = BriarWaypoint(**args)
+            
+            result = self.execute_substate(fly_waypoint_state, userdata)
+            if result != "succeeded_waypoints":
+                return result
+        
+        return "succeeded_waypoints"
