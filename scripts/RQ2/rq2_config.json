@@ -1,0 +1,11 @@
+{
+  "_comment": "RQ2 config. One entry per dataset. versions_json lists V0..Vn source snapshots. v0_json is the starting model M_0 from RQ1 (k=5). As in the paper, all trials start from the trial-2 ensemble; write trial{trial} instead of trial2 to give trial n its own M_0.",
+  "datasets": {
+    "dronology": {
+      "versions_json": "versions/dronology.json",
+      "v0_json": "../RQ1/experiments/dronology/v5/trial2/final/V0-ensemble.json",
+      "discovery_runs": 4,
+      "voting_t": 2
+    }
+  }
+}

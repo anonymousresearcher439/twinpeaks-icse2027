@@ -1,0 +1,32 @@
+[
+  {
+    "name": "V0",
+    "branch": "DATASET_V001",
+    "source": "$TP_DATASETS/dronology/v0",
+    "note": "2018-05-11, 261 files, 17.6 KLOC. Baseline: core UAV coordination framework"
+  },
+  {
+    "name": "V1",
+    "branch": "integration@cc927a2",
+    "source": "$TP_DATASETS/dronology/v1",
+    "note": "2018-06-19, 302 files, 21.8 KLOC. Post-merge integration snapshot"
+  },
+  {
+    "name": "V2",
+    "branch": "integration@902769b",
+    "source": "$TP_DATASETS/dronology/v2",
+    "note": "2018-07-12, 357 files, 25.9 KLOC. Area-mapping and mission-planning extensions"
+  },
+  {
+    "name": "V3",
+    "branch": "ICSE_2019_DATA_V1",
+    "source": "$TP_DATASETS/dronology/v3",
+    "note": "2018-11-13, 392 files, 26.9 KLOC. ICSE 2019 published dataset (V1)"
+  },
+  {
+    "name": "V4",
+    "branch": "integration",
+    "source": "$TP_DATASETS/dronology/v4",
+    "note": "2019-02-12, 405 files, 27.7 KLOC. Latest stable integration branch"
+  }
+]

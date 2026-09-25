@@ -1,0 +1,11 @@
+{
+  "_comment": "RQ1 config. One entry per dataset. pool_dir holds n_voters independent single-run V0 models produced by generate_voters.sh; max_v is the largest ensemble size k.",
+  "datasets": {
+    "dronology": {
+      "source": "$TP_DATASETS/dronology/v0",
+      "pool_dir": "voters/dronology",
+      "n_voters": 15,
+      "max_v": 5
+    }
+  }
+}

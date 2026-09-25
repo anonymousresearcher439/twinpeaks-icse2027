@@ -1,0 +1,6 @@
+.env
+venv/
+__pycache__/
+RQ1/voters/
+RQ1/experiments/
+RQ2/experiments/

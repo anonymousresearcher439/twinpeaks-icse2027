@@ -1,0 +1,15 @@
+{
+  "incremental": {
+    "calls": 40,
+    "input_tokens": 1505413,
+    "output_tokens": 286224,
+    "total_tokens": 1791637
+  },
+  "scratch": {
+    "calls": 20,
+    "input_tokens": 261817,
+    "output_tokens": 59215,
+    "total_tokens": 321032
+  },
+  "token_ratio": 5.5809
+}

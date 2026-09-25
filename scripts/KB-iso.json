@@ -1,0 +1,98 @@
+{
+  "performance-efficiency": {
+    "core_concern": "Performance relative to the amount of resources used under stated conditions, encompassing time behaviour, resource utilization, and capacity.",
+    "classify_if": [
+      "Specifies response times, processing times, or throughput for operations.",
+      "Constrains CPU, memory, storage, bandwidth, or energy consumption.",
+      "Specifies maximum limits on concurrent users, transactions, data volume, or bandwidth.",
+      "Specifies performance under a defined load, network condition, or workload.",
+      "Requires batch or background processing to complete within a time or resource limit.",
+      "Specifies future or increased capacity requirements beyond current load targets.",
+      "Requires horizontal or vertical scaling by adding resources without unacceptable degradation."
+    ],
+    "boundary_notes": "Performance Efficiency covers speed, resource use, and capacity. Reliability concerns correct operation over time. Flexibility (Scalability sub-characteristic) concerns structural adaptation to growth beyond adding resources. Compatibility concerns exchange with other systems."
+  },
+  "compatibility": {
+    "core_concern": "How well the product can share an environment with other products and exchange information with them, without negative impact on either side.",
+    "classify_if": [
+      "Requires the product to share resources or an environment with other products without degrading their performance.",
+      "Requires integration with a named external system, service, API, device, or platform.",
+      "Specifies communication protocols, message formats, data schemas, or interface contracts for information exchange.",
+      "Requires import, export, synchronization, or data sharing with external systems.",
+      "Requires compatibility or semantic consistency of exchanged data across systems or organisations."
+    ],
+    "boundary_notes": "Compatibility covers both co-existence (shared environments) and interoperability (information exchange). Flexibility covers adaptation to different technical environments. Maintainability covers internal modifiability."
+  },
+  "interaction-capability": {
+    "core_concern": "How well the product can be operated by specified users to achieve their goals effectively, efficiently, and with satisfaction, covering learnability, operability, error protection, engagement, inclusivity, user assistance, and self-descriptiveness.",
+    "classify_if": [
+      "Requires users to be able to recognise whether the product is appropriate for their needs.",
+      "Specifies ease of learning, training time, intuitiveness, or self-explanatory operation.",
+      "Specifies task completion time, success rate, error rate, or user satisfaction target.",
+      "Requires the product to protect users from making errors or to support recovery from them.",
+      "Requires the interface to be engaging, motivating, or to encourage continued use.",
+      "Requires accessibility for users with diverse characteristics, abilities, cultures, or languages.",
+      "Requires embedded user assistance such as help, guidance, or documentation within the product.",
+      "Requires the product to present context-appropriate information so users need not recall it or consult external sources."
+    ],
+    "boundary_notes": "Interaction Capability (formerly Usability) concerns human effectiveness in operating the system. Look-and-feel concerns visual or sensory presentation. Performance Efficiency concerns system speed. Legal or regulatory requirements may overlap when accessibility is externally mandated."
+  },
+  "reliability": {
+    "core_concern": "How well the system performs specified functions under specified conditions for a specified period, including faultlessness, availability, fault tolerance, and recoverability.",
+    "classify_if": [
+      "Requires the product to perform without faults under normal operating conditions.",
+      "Specifies uptime, downtime, service hours, availability windows, or recovery time/point objectives.",
+      "Requires failover, redundancy, graceful degradation, or continued service after component failure.",
+      "Requires the product to continue operating as intended despite hardware or software faults.",
+      "Requires recovery of affected data and re-establishment of desired state after a failure.",
+      "Specifies failure rates, defect rates, mean time between failures, or deterministic repeatable behaviour."
+    ],
+    "boundary_notes": "Reliability covers faultless operation, access continuity, fault tolerance, and recoverability. Performance Efficiency concerns speed when the system is available. Security concerns protection from malicious actions. Safety concerns preventing physical harm."
+  },
+  "security": {
+    "core_concern": "How well the product protects information and data so that access matches each actor's level of authorisation, including confidentiality, integrity, non-repudiation, accountability, authenticity, and resistance.",
+    "classify_if": [
+      "Requires data to be accessible only to those authorised, including encryption or access control.",
+      "Requires prevention of unauthorised access to, or modification of, programs and data.",
+      "Requires that actions or events can be proven to have taken place and cannot be denied.",
+      "Requires that actions of an entity can be traced uniquely to that entity.",
+      "Requires verification or proof of the identity of a subject or resource.",
+      "Requires the product to continue operating correctly while under attack from malicious actors."
+    ],
+    "boundary_notes": "Security is about protection from unauthorised or malicious actions. Reliability concerns continued correct operation under normal or faulty conditions. Legal/regulatory obligations may overlap when a named regulation mandates specific security controls."
+  },
+  "maintainability": {
+    "core_concern": "How effectively and efficiently the product can be modified by its intended maintainers, covering modularity, reusability, analysability, modifiability, testability, and updateability.",
+    "classify_if": [
+      "Requires modular components such that a change to one has minimal impact on others.",
+      "Requires assets or components to be reusable across systems or to build other assets.",
+      "Requires the ability to assess the impact of a change and diagnose defects or failure causes.",
+      "Requires the product to be modifiable without introducing defects or degrading existing quality.",
+      "Requires test criteria to be establishable and tests to be executable to verify compliance.",
+      "Requires the product to be updatable or upgradeable with effectiveness, efficiency, and minimal service disruption."
+    ],
+    "boundary_notes": "Maintainability concerns changing and sustaining the system over its lifetime. Flexibility concerns adaptation to different hardware or operational environments. Reliability concerns correct continued operation during normal use."
+  },
+  "flexibility": {
+    "core_concern": "How well the product can be adapted to different or evolving hardware, software, or other operational or usage environments, covering adaptability, scalability, installability, and replaceability.",
+    "classify_if": [
+      "Requires the product to be adapted for different or evolving hardware, software, or usage environments.",
+      "Requires the product to handle growing or shrinking workloads, or to adapt its capacity to changing demands without major re-architecture.",
+      "Requires the product to be successfully installed and/or uninstalled in a specified environment.",
+      "Requires the product to replace another specified product for the same purpose in the same environment.",
+      "Requires support for multiple operating systems, browsers, devices, hardware platforms, or cloud environments without environment-specific code changes."
+    ],
+    "boundary_notes": "Flexibility (formerly Portability) covers structural adaptation across environments and capacity growth requiring architectural change. Compatibility covers information exchange with other systems. Performance Efficiency covers speed and resource use at a given capacity. Maintainability covers internal code-level changeability."
+  },
+  "safety": {
+    "core_concern": "How well the product avoids states in which human life, health, property, or the environment is endangered, covering operational constraints, risk identification, fail-safe behaviour, hazard warning, and safe integration.",
+    "classify_if": [
+      "Requires the product to operate safely within defined operational limits or boundaries.",
+      "Requires identification of situations or events that could lead to risk or harm.",
+      "Requires the product to transition to a safe state when a failure occurs.",
+      "Requires the product to warn users or operators of identified hazards in time to react.",
+      "Requires the product to maintain safe behaviour when combined with other components or systems."
+    ],
+    "boundary_notes": "Safety concerns preventing harm to people, property, or the environment. Security concerns resisting unauthorised or malicious actions. Reliability supports safety but a requirement is classified as Safety only when harm or hazard is the explicit concern."
+  }
+}
